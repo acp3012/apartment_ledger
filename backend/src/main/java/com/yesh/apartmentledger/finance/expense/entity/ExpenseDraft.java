@@ -1,0 +1,75 @@
+package com.yesh.apartmentledger.finance.expense.entity;
+
+import com.yesh.apartmentledger.core.apartment.entity.Apartment;
+import com.yesh.apartmentledger.core.flat.entity.Flat;
+import com.yesh.apartmentledger.core.user.entity.AppUser;
+import com.yesh.apartmentledger.master.approvalstatus.entity.ApprovalStatus;
+import com.yesh.apartmentledger.master.ledgercategory.entity.LedgerCategory;
+import com.yesh.apartmentledger.master.paymentmode.entity.PaymentMode;
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "expense_draft", schema = "finance")
+@Getter
+@Setter
+@NoArgsConstructor
+public class ExpenseDraft {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "expense_draft_id")
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "apartment_id", nullable = false)
+    private Apartment apartment;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ledger_category_id", nullable = false)
+    private LedgerCategory ledgerCategory;
+
+    @Column(name = "transaction_date", nullable = false)
+    private LocalDate transactionDate;
+
+    @Column(name = "txn_year", nullable = false)
+    private Short txnYear;
+
+    @Column(name = "txn_month", nullable = false)
+    private Short txnMonth;
+
+    @Column(name = "amount", nullable = false, precision = 12, scale = 2)
+    private BigDecimal amount;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "payment_mode_id", nullable = false)
+    private PaymentMode paymentMode;
+
+    @Column(name = "reference_number", length = 50)
+    private String referenceNumber;
+
+    @Column(name = "remarks", length = 500)
+    private String remarks;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "approval_status_id", nullable = false)
+    private ApprovalStatus approvalStatus;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by", nullable = false)
+    private AppUser createdBy;
+
+    @Column(name = "created_date", nullable = false, updatable = false)
+    private LocalDateTime createdDate;
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdDate = LocalDateTime.now();
+    }
+}

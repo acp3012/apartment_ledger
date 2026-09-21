@@ -1,0 +1,1 @@
+package com.yesh.apartmentledger.master.referencetype.entity;
