@@ -1,0 +1,35 @@
+Table list - apartment_ledger
+---------------
+-- core
+core	apartment
+core	app_user
+core	flat
+core	user_role
+-- finance 
+finance	expense
+finance	expense_draft
+finance	income
+finance	income_draft
+finance	legacy_arrear
+finance	maintenance_advance
+finance	maintenance_due
+finance	maintenance_payment
+finance	maintenance_rate
+finance	monthly_ledger
+finance ledger_period
+
+--- master
+master	approval_status
+master	ledger_category
+master	payment_mode
+master	reference_type
+master	role
+
+---
+public	apartment_expense
+public	apartment_income
+public	apartments
+public	app_users
+public	expense_categories
+public	flats
+public	roles
