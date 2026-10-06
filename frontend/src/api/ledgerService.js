@@ -28,4 +28,11 @@ export const ledgerService = {
     });
     return response.data;
   },
+  // New endpoint for flat payment status
+  getFlatPaymentStatus: async (apartmentId, flatId, year, month) => {
+    const response = await api.get(`/apartments/${apartmentId}/flats/${flatId}/payment-status`, {
+      params: { year, month },
+    });
+    return response.data;
+  },
 };
