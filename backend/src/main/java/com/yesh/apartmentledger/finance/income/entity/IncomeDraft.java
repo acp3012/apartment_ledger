@@ -7,7 +7,7 @@ import com.yesh.apartmentledger.core.user.entity.AppUser;
 import com.yesh.apartmentledger.master.approvalstatus.entity.ApprovalStatus;
 import com.yesh.apartmentledger.master.ledgercategory.entity.LedgerCategory;
 import com.yesh.apartmentledger.master.paymentmode.entity.PaymentMode;
-import com.yesh.apartmentledger.master.referencetype.entity.ReferenceType;
+
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -49,7 +49,6 @@ public class IncomeDraft extends BaseAuditEntity {
     @Column(name = "txn_year", insertable = false, updatable = false)
     private Short txnYear;
     @Column(name = "txn_month", insertable = false, updatable = false)
-
     private Short txnMonth;
 
     @Column(name = "amount", nullable = false, precision = 12, scale = 2)
@@ -74,17 +73,17 @@ public class IncomeDraft extends BaseAuditEntity {
     private AppUser createdBy;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "updated_by", nullable = true)
+    @JoinColumn(name = "updated_by")
     private AppUser updatedBy;
 
-    /*
-    @Column(name = "created_date", nullable = false, updatable = false)
-    private LocalDateTime createdDate;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "approved_by", nullable = true)
+    private AppUser approvedBy ;
 
-    @PrePersist
-    protected void onCreate() {
-        this.createdDate = LocalDateTime.now();
-    }
+    @Column(name= "approved_date")
+    private LocalDateTime approveDate ;
 
-     */
+
+    @Column(name = "approval_comments", length = 500, nullable = true)
+    private String approvalComments;
 }

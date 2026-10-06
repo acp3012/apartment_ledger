@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/v1/apartments")
+@RequestMapping("/api/v1/apartments/{apartmentId}")
 public class FlatController {
 
     private final FlatRepository flatRepository;
@@ -19,7 +19,7 @@ public class FlatController {
         this.flatRepository = flatRepository;
     }
 
-    @GetMapping("/{apartmentId}/flats")
+    @GetMapping("/flats")
     public ResponseEntity<List<FlatResponse>> getFlatsByApartment(@PathVariable Long apartmentId) {
 
         List<FlatResponse> flats = flatRepository.findByApartmentId(apartmentId)

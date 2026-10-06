@@ -2,6 +2,7 @@ package com.yesh.apartmentledger.finance.ledger.entity;
 
 import com.yesh.apartmentledger.common.entity.BaseAuditEntity;
 import com.yesh.apartmentledger.core.apartment.entity.Apartment;
+import com.yesh.apartmentledger.core.enums.LedgerStatusEnum;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -44,6 +45,6 @@ public class MonthlyLedger extends BaseAuditEntity {
     private BigDecimal closingBalance;
 
     @Column(name = "status", nullable = false)
-    private String status = "OPEN" ;
+    private String status = LedgerStatusEnum.OPEN.name() ;
 
 }

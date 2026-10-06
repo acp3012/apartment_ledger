@@ -1,71 +1,101 @@
 package com.yesh.apartmentledger.finance.income.controller;
 
-import com.yesh.apartmentledger.finance.income.dto.IncomeApprovalRequest;
-import com.yesh.apartmentledger.finance.income.dto.IncomeDraftRequest;
-import com.yesh.apartmentledger.finance.income.dto.IncomeDraftResponse;
+import com.yesh.apartmentledger.core.enums.ApprovalStatusEnum;
+import com.yesh.apartmentledger.finance.income.dto.*;
 import com.yesh.apartmentledger.finance.income.service.IncomeDraftService;
-import jakarta.validation.Valid;
+//import com.yesh.apartmentledger.finance.income.service.IncomeService;
+import com.yesh.apartmentledger.finance.income.service.IncomeService;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.AllArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/finance")
+@AllArgsConstructor
+@RequestMapping("/api/v1/apartments/{apartmentId}/incomes")
+@Tag(name= "Income management.",
+        description = "API to manage income records of the apartment. Draft are unapproved entries. Once approved it becomes income.")
+
 public class IncomeController {
 
     private final IncomeDraftService incomeDraftService;
+    private final IncomeService incomeService;
 
-    public IncomeController(IncomeDraftService incomeDraftService) {
-        this.incomeDraftService = incomeDraftService;
+    // 1. CREATE: Used by the React Maker Form you just built
+    @PostMapping("/drafts")
+    public ResponseEntity<String> createDraft(
+            @PathVariable Long apartmentId,
+            @RequestBody IncomeDraftRequest request) {
+        incomeDraftService.createDraft(apartmentId, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body("Income draft saved successfully.");
     }
+    // Update draft income
+    @PutMapping("/drafts/{draftId}")
+    public ResponseEntity<Void> updateIncomeDraft(
+            @PathVariable Long apartmentId,
+            @PathVariable Long draftId,
+            @RequestBody IncomeDraftRequest payload) {
 
-    /**
-     * UI Action: Admin submits the Income Entry form
-     * Endpoint: POST /al/api/v1/finance/income-drafts
-     */
-    @PostMapping("/income-drafts")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<IncomeDraftResponse> createIncomeDraft(@Valid @RequestBody IncomeDraftRequest request) {
-        IncomeDraftResponse response = incomeDraftService.createIncomeDraft(request);
+        // Your service should find the draft by draftId, update its fields with the payload, and save()
+        incomeDraftService.updateDraft(apartmentId, draftId, payload);
+
+        return ResponseEntity.ok().build();
+    }
+    // 2. READ: Get ALL drafts based on status for the grid/Checker
+   // "/api/v1/apartments/{apartmentId}/incomes/drafts?approvalStatus=PENDING&year=2026 &moth=8
+    @GetMapping("/drafts")
+    public ResponseEntity<List<IncomeDraftResponse>> getAllDrafts(
+            @PathVariable Long apartmentId,
+            @RequestParam(required = false) String approvalStatus,
+            @RequestParam(required = false) Short year,
+            @RequestParam(required = false) Short month
+    ) {
+        List<IncomeDraftResponse> response = incomeDraftService
+                .getDraftsByApprovalStatusYearAndMonth(apartmentId,approvalStatus,year,month);
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * UI Action: Load the Approval Dashboard table with pending entries
-     * Endpoint: GET /al/api/v1/finance/income-drafts/pending
-     */
-    @GetMapping("/income-drafts/pending")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<IncomeDraftResponse>> getPendingDrafts() {
-        List<IncomeDraftResponse> pendingDrafts = incomeDraftService.getPendingDrafts();
-        return ResponseEntity.ok(pendingDrafts);
+    // 3. UPDATE: Approve a batch of drafts
+    @PostMapping("/drafts/approve-bulk")
+    public ResponseEntity<String> approveDrafts(
+            @PathVariable Long apartmentId,
+            @RequestBody(required = true) DraftApprovalRequest request) {
+
+        String result = incomeDraftService.draftApprovalDecision(apartmentId, request,ApprovalStatusEnum.APPROVED);
+        return ResponseEntity.ok(result);
+    }
+    @PostMapping("/drafts/reject-bulk")
+    public ResponseEntity<String> rejectDrafts(
+            @PathVariable Long apartmentId,
+            @RequestBody(required = true) DraftApprovalRequest request) {
+
+        String result = incomeDraftService.draftApprovalDecision(apartmentId, request, ApprovalStatusEnum.REJECTED);
+        return ResponseEntity.ok(result);
     }
 
-    /**
-     * UI Action: Admin clicks "Approve" on a pending draft
-     * Endpoint: PUT /al/api/v1/finance/income-drafts/{id}/approve
-     */
-    @PutMapping("/income-drafts/{id}/approve")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> approveDraft(
-            @PathVariable Long id,
-            @RequestBody(required = false) IncomeApprovalRequest request) {
-        incomeDraftService.approveDraft(id, request);
-        return ResponseEntity.ok().build();
+    // ========================= income -------------------
+    // al/api/v1/apartments/1/incomes?year=2026&month=8
+    @GetMapping
+    public ResponseEntity<List<IncomeResponse>> getAllIncome(
+            @PathVariable Long apartmentId,
+            @RequestParam(required = false) Short year,
+            @RequestParam(required = false) Short month
+    ) {
+        var data =  incomeService.getIncomeByApartmentYearAndMonth(apartmentId,year,month);
+        return ResponseEntity.ok(data);
+    }
+    // for reports
+    @GetMapping("/summary/payment-mode")
+    public ResponseEntity<List<PaymentModeIncomeSummary>> getSummaryByPaymentMode(
+            @PathVariable Long apartmentId,
+            @RequestParam Short year,
+            @RequestParam Short month) {
+
+        return ResponseEntity.ok(incomeService.getIncomeSummaryByPaymentMode(apartmentId,year,month));
     }
 
-    /**
-     * UI Action: Admin clicks "Reject" on a pending draft
-     * Endpoint: PUT /al/api/v1/finance/income-drafts/{id}/reject
-     */
-    @PutMapping("/income-drafts/{id}/reject")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> rejectDraft(
-            @PathVariable Long id,
-            @RequestBody(required = false) IncomeApprovalRequest request) {
-        incomeDraftService.rejectDraft(id, request);
-        return ResponseEntity.ok().build();
-    }
+
 }

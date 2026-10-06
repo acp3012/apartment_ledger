@@ -6,12 +6,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ExpenseDraftRepository extends JpaRepository<ExpenseDraft, Long> {
 
-    // Fetch pending drafts (Status ID 1) for the checker screen
-    List<ExpenseDraft> findByApartmentIdAndApprovalStatusId(Long apartmentId, Long statusId);
-    // Notice how we traverse the relationship: ApprovalStatus_StatusName
+   // Notice how we traverse the relationship: ApprovalStatus_StatusName
     List<ExpenseDraft> findByApartmentIdAndApprovalStatus_StatusName(Long apartmentId, String statusName);
+
+    Optional<ExpenseDraft> findByIdAndApartmentId(Long apartmentId, Long expenseDraftId);
 }

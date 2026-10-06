@@ -1,5 +1,4 @@
 package com.yesh.apartmentledger.finance.income.entity;
-import com.yesh.apartmentledger.master.referencetype.entity.ReferenceType;
 import com.yesh.apartmentledger.core.apartment.entity.Apartment;
 import com.yesh.apartmentledger.core.flat.entity.Flat;
 import com.yesh.apartmentledger.core.user.entity.AppUser;
@@ -44,6 +43,12 @@ public class Income {
     @Column(name = "transaction_date", nullable = false, updatable = false)
     private LocalDate transactionDate;
 
+    @Column(name = "txn_year", updatable = false, insertable = false)
+    private Short year ;
+
+    @Column(name = "txn_month", updatable = false, insertable = false)
+    private Short month;
+
     @Column(name = "amount", nullable = false, precision = 12, scale = 2, updatable = false)
     private BigDecimal amount;
 
@@ -51,11 +56,8 @@ public class Income {
     @JoinColumn(name = "payment_mode_id", nullable = false, updatable = false)
     private PaymentMode paymentMode;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "reference_type_id", updatable = false)
-    private ReferenceType referenceType;
 
-    @Column(name = "reference_no", length = 50, updatable = false)
+    @Column(name = "reference_number", length = 50, updatable = false)
     private String referenceNo;
 
     @Column(name = "remarks", length = 500, updatable = false)

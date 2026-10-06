@@ -2,6 +2,7 @@ package com.yesh.apartmentledger.master.ledgercategory.repository;
 
 import com.yesh.apartmentledger.master.ledgercategory.entity.LedgerCategory;
 import org.jspecify.annotations.NonNull;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -13,6 +14,7 @@ public interface LedgerCategoryRepository extends JpaRepository<LedgerCategory, 
 
     Optional<LedgerCategory> findById(Long id);
     List<LedgerCategory> findByTransactionTypeIgnoreCase(String transactionType);
+
     List<LedgerCategory> findAll();
     List<LedgerCategory> findByTransactionTypeAndIsActiveTrueOrderByDisplayOrderAsc(String transactionType);
 

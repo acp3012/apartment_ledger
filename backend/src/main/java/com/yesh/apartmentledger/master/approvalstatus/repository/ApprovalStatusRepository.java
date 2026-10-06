@@ -11,5 +11,6 @@ import java.util.Optional;
 public interface ApprovalStatusRepository extends JpaRepository<ApprovalStatus, Long> {
 
     List<ApprovalStatus> findAll();
+
     Optional<ApprovalStatus> findByStatusNameIgnoreCase(String statusName);
 }

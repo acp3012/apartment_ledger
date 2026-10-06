@@ -7,8 +7,6 @@ public record ExpenseDraftRequest(
         Long makerId,  // userid
         Long ledgerCategoryId,
         LocalDate transactionDate,
-        Short txnYear,
-        Short txnMonth,
         BigDecimal amount,
         Long paymentModeId,
         String referenceNumber,

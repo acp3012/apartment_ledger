@@ -8,5 +8,5 @@ import java.util.Optional;
 
 @Repository
 public interface LedgerPeriodRepository extends JpaRepository<LedgerPeriod,Long> {
-    Optional<LedgerPeriod> findById(Long id);
+     Optional<LedgerPeriod> findById(Long id) ;
 }

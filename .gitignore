@@ -1,0 +1,16 @@
+# Node / React
+frontend/node_modules/
+frontend/dist/
+
+# Java / Spring Boot
+backend/target/
+backend/.settings/
+backend/.classpath
+backend/.project
+.idea/
+*.iml
+.DS_Store
+
+# ignore property files
+backend/src/main/resources/application-prod.properties
+backend/src/main/resources/application-local.properties

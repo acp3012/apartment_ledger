@@ -1,17 +1,34 @@
 package com.yesh.apartmentledger.core.validation;
 
 import com.yesh.apartmentledger.core.apartment.entity.Apartment;
+import com.yesh.apartmentledger.core.apartment.repository.ApartmentRepository;
 import com.yesh.apartmentledger.exception.BadRequestException;
+import com.yesh.apartmentledger.exception.ResourceNotFoundException;
 import com.yesh.apartmentledger.finance.ledger.repository.MonthlyLedgerRepository;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.annotations.NotFound;
+import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.stereotype.Component;
+
+import java.time.LocalDate;
 
 @Component
 @RequiredArgsConstructor
 public class LedgerValidationUtil {
 
     private final MonthlyLedgerRepository monthlyLedgerRepository;
+    private final ApartmentRepository apartmentRepository;
 
+
+    public void validateBillingPeriod(Long apartmentId, LocalDate transactionDate) {
+        var apartment = apartmentRepository.findById(apartmentId).orElseThrow(()-> new ResourceNotFoundException("Apartment not found for Id " + apartmentId));
+            validateBillingPeriod(apartment,transactionDate);
+    }
+    public void validateBillingPeriod(Apartment apartment, LocalDate transactionDate) {
+        Short year = (short) transactionDate.getYear();
+        Short month = (short) transactionDate.getMonthValue();
+        validateBillingPeriod(apartment,year, month);
+    }
     /**
      * Ensures transactions are valid based on Go-Live date AND Month-End closures.
      */

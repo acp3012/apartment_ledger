@@ -1,5 +1,6 @@
 package com.yesh.apartmentledger.finance.expense.entity;
 
+import com.yesh.apartmentledger.common.entity.BaseAuditEntity;
 import com.yesh.apartmentledger.core.apartment.entity.Apartment;
 import com.yesh.apartmentledger.core.flat.entity.Flat;
 import com.yesh.apartmentledger.core.user.entity.AppUser;
@@ -20,7 +21,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @NoArgsConstructor
-public class ExpenseDraft {
+public class ExpenseDraft extends BaseAuditEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -37,11 +38,11 @@ public class ExpenseDraft {
 
     @Column(name = "transaction_date", nullable = false)
     private LocalDate transactionDate;
+    // Derived from transaction date
 
-    @Column(name = "txn_year", nullable = false)
+    @Column(name = "txn_year", insertable = false, updatable = false)
     private Short txnYear;
-
-    @Column(name = "txn_month", nullable = false)
+    @Column(name = "txn_month", insertable = false, updatable = false)
     private Short txnMonth;
 
     @Column(name = "amount", nullable = false, precision = 12, scale = 2)
@@ -65,11 +66,18 @@ public class ExpenseDraft {
     @JoinColumn(name = "created_by", nullable = false)
     private AppUser createdBy;
 
-    @Column(name = "created_date", nullable = false, updatable = false)
-    private LocalDateTime createdDate;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "updated_by")
+    private AppUser updated_by;
 
-    @PrePersist
-    protected void onCreate() {
-        this.createdDate = LocalDateTime.now();
-    }
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "approved_by")
+    private AppUser approvedBy;
+
+    @Column(name = "approved_date")
+    private LocalDateTime approvedDate;
+
+    @Column(name = "approval_comments", length = 500)
+    private String approvalComments;
+
 }

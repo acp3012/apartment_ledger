@@ -1,0 +1,76 @@
+@import "tailwindcss";
+
+html {
+  overflow-y: scroll;
+}
+:root {
+  --app-bg: #f5f7fb;
+  --panel: #ffffff;
+  --panel-alt: #f8fafc;
+  --panel-strong: #eef4ff;
+  --ink: #0f172a;
+  --muted: #475569;
+  --line: #e2e8f0;
+  --primary: #3b82f6;
+  --primary-strong: #1d4ed8;
+  --primary-soft: #dbeafe;
+  --success: #16a34a;
+  --success-soft: #dcfce7;
+  --warning: #d97706;
+  --warning-soft: #fef3c7;
+  --shadow-soft: 0 10px 30px rgba(15, 23, 42, 0.06);
+  --shadow-medium: 0 16px 32px rgba(15, 23, 42, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--app-bg);
+  color: var(--ink);
+  font-family: Inter, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@media (max-width: 640px) {
+  html {
+    font-size: 15px;
+  }
+
+  body {
+    min-width: 320px;
+  }
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+@layer utilities {
+  .soft-card {
+    @apply rounded-2xl border border-slate-200 bg-white shadow-[var(--shadow-soft)];
+  }
+
+  .soft-panel {
+    @apply rounded-2xl border border-slate-200 bg-slate-50;
+  }
+
+  .section-kicker {
+    @apply text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500;
+  }
+}

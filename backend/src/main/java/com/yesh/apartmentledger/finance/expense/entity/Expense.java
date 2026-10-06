@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
 @Table(schema = "finance", name = "expense")
 @Getter
 @Setter
-public class Expense {
+public class Expense  {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -37,10 +37,10 @@ public class Expense {
     @Column(name = "transaction_date", nullable = false)
     private LocalDate transactionDate;
 
-    @Column(name = "txn_year", nullable = false)
+    @Column(name = "txn_year", nullable = false, updatable = false)
     private Short txnYear;
 
-    @Column(name = "txn_month", nullable = false)
+    @Column(name = "txn_month", nullable = false, updatable = false)
     private Short txnMonth;
 
     @Column(name = "amount", nullable = false, precision = 12, scale = 2)
@@ -67,10 +67,6 @@ public class Expense {
     @JoinColumn(name = "approved_by", nullable = false)
     private AppUser approvedBy;
 
-    @PrePersist
-    protected void onCreate() {
-        this.createdDate = LocalDateTime.now();
-    }
-
-    // ... (include paymentMode, referenceType, referenceNumber, remarks, createdBy, approvedBy, etc. mapped just like your income entity)
+    @Column(name = "approved_date", nullable = false, updatable = false)
+    private LocalDateTime approvedDate;
 }
