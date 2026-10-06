@@ -1,4 +1,17 @@
 package com.yesh.apartmentledger.core.flat.dto;
 
-public record FlatPaymentStatusResponse() {
-}
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
+public record FlatPaymentStatusResponse(
+        String flatNumber,
+        String ownerName,
+        Short year,
+        Short month,
+        String status,
+        BigDecimal amountPaid,
+        LocalDate lastPaymentDate,
+        String paymentModeName,
+        String referenceNumber,
+        BigDecimal arrearsAmount
+) {}

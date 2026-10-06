@@ -3,6 +3,7 @@ package com.yesh.apartmentledger.core.flat.repository;
 
 import com.yesh.apartmentledger.core.flat.entity.Flat;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -18,4 +19,5 @@ public interface FlatRepository extends JpaRepository<Flat, Long> {
     List<Flat> findByApartmentId(Long apartmentId);
 
     Optional<Flat> findByApartmentIdAndFlatNumber(Long apartmentId, String flatNumber);
+
 }
