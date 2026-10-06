@@ -2,9 +2,11 @@ import { useState, useEffect, useCallback } from "react";
 import { expenseService } from "../api/expenseService";
 import { toast } from "react-toastify";
 import { masterDataService } from "../api/masterDataService";
+import { usePeriod } from "../context/PeriodContext";
 import LedgerPeriodBanner from "../components/LedgerPeriodBanner";
 
 const ExpenseMakerForm = ({ apartmentId, makerId }) => {
+  const { activePeriod } = usePeriod();
   const [categories, setCategories] = useState([]);
   const [paymentModes, setPaymentModes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -53,15 +55,18 @@ const ExpenseMakerForm = ({ apartmentId, makerId }) => {
 
     const fetchMasterData = async () => {
       try {
-        const [cats, modes, ledgerData] = await Promise.all([
+        if (!activePeriod) {
+          throw new Error("Active ledger period is not available.");
+        }
+
+        const [cats, modes] = await Promise.all([
           masterDataService.getExpenseCategories(),
           masterDataService.getPaymentModes(),
-          masterDataService.getActiveLedgerPeriod(apartmentId),
         ]);
 
         if (isMounted) {
-          const year = ledgerData.year;
-          const month = ledgerData.month;
+          const year = activePeriod.year;
+          const month = activePeriod.month;
           setLedgerPeriod({ year, month });
           const minDate = `${year}-${String(month).padStart(2, "0")}-01`;
           const lastDay = new Date(year, month, 0).getDate();
@@ -96,7 +101,7 @@ const ExpenseMakerForm = ({ apartmentId, makerId }) => {
     return () => {
       isMounted = false;
     };
-  }, [apartmentId, fetchDrafts]);
+  }, [activePeriod, apartmentId, fetchDrafts]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;

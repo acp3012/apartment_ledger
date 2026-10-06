@@ -35,4 +35,9 @@ export const ledgerService = {
     });
     return response.data;
   },
+   getActiveLedgerPeriod: async (apartmentId) => {
+        // Assumes your backend returns something like: { month: "September", year: 2026 }
+        const response = await api.get(`/apartments/${apartmentId}/ledger/active-period`);
+        return response.data;
+    }
 };

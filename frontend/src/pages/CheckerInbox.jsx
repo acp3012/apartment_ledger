@@ -1,18 +1,18 @@
 import React, { useState } from "react";
 import { toast } from "react-toastify";
 import { expenseService } from "../api/expenseService";
-import { masterDataService } from "../api/masterDataService";
 import { useAuth } from "../context/AuthContext";
+import { usePeriod } from "../context/PeriodContext";
 import LedgerPeriodBanner from "../components/LedgerPeriodBanner";
 
 const CheckerInbox = ({ apartmentId: routeApartmentId }) => {
   const { user } = useAuth();
+  const { activePeriod } = usePeriod();
   const apartmentId = Number(routeApartmentId ?? user?.apartmentId ?? 1);
   const currentUserId = Number(user?.id ?? user?.userId ?? 0);
 
   const [drafts, setDrafts] = useState([]);
   const [selectedIds, setSelectedIds] = useState([]);
-  const [activePeriod, setActivePeriod] = useState(null);
 
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
@@ -31,12 +31,12 @@ const CheckerInbox = ({ apartmentId: routeApartmentId }) => {
       setLoading(true);
       setErrorMessage("");
 
-      const [period, pendingDrafts] = await Promise.all([
-        masterDataService.getActiveLedgerPeriod(apartmentId),
-        expenseService.getPendingDrafts(apartmentId),
-      ]);
+      if (!activePeriod) {
+        throw new Error("Active ledger period is not available.");
+      }
 
-      setActivePeriod(period);
+      const pendingDrafts = await expenseService.getPendingDrafts(apartmentId);
+
       setDrafts(pendingDrafts);
       setHasSearched(true);
       setSelectedIds([]);

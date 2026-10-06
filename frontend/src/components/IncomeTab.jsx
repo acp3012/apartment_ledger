@@ -2,9 +2,11 @@ import { useState, useEffect, useCallback } from "react";
 import { masterDataService } from "../api/masterDataService";
 import { apartmentService } from "../api/apartmentService";
 import { incomeService } from "../api/incomeService";
+import { usePeriod } from "../context/PeriodContext";
 import { toast } from "react-toastify";
 
 const IncomeTab = ({ apartmentId, makerId }) => {
+  const { activePeriod } = usePeriod();
   const [isOtherIncome, setIsOtherIncome] = useState(false);
   const isMaintenance = !isOtherIncome;
 
@@ -54,21 +56,23 @@ const IncomeTab = ({ apartmentId, makerId }) => {
   useEffect(() => {
     const loadDependencies = async () => {
       try {
-        const [flatsData, modesData, ledgerData, categoriesData] =
-          await Promise.all([
-            apartmentService.getFlatsByApartment(apartmentId),
-            masterDataService.getPaymentModes(),
-            masterDataService.getActiveLedgerPeriod(apartmentId),
-            masterDataService.getIncomeCategories(),
-          ]);
+        if (!activePeriod) {
+          throw new Error("Active ledger period is not available.");
+        }
+
+        const [flatsData, modesData, categoriesData] = await Promise.all([
+          apartmentService.getFlatsByApartment(apartmentId),
+          masterDataService.getPaymentModes(),
+          masterDataService.getIncomeCategories(),
+        ]);
 
         setFlats(flatsData);
         setPaymentModes(modesData);
         setLedgerCategories(categoriesData);
 
         // Date Bounds Setup
-        const year = ledgerData.year;
-        const month = ledgerData.month;
+        const year = activePeriod.year;
+        const month = activePeriod.month;
         const minDate = `${year}-${String(month).padStart(2, "0")}-01`;
         const lastDay = new Date(year, month, 0).getDate();
         const maxDate = `${year}-${String(month).padStart(2, "0")}-${lastDay}`;
@@ -93,7 +97,7 @@ const IncomeTab = ({ apartmentId, makerId }) => {
       }
     };
     loadDependencies();
-  }, [apartmentId, fetchDrafts, isMaintenance]);
+  }, [activePeriod, apartmentId, fetchDrafts, isMaintenance]);
 
   useEffect(() => {
     const fetchDynamicRate = async () => {

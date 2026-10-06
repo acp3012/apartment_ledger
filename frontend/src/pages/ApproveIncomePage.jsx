@@ -2,12 +2,13 @@ import React, { useState } from "react";
 import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { incomeService } from "../api/incomeService";
-import { masterDataService } from "../api/masterDataService";
 import { useAuth } from "../context/AuthContext";
+import { usePeriod } from "../context/PeriodContext";
 
 const ApproveIncomePage = ({ apartmentId: routeApartmentId }) => {
   const { apartmentId: routeParamId } = useParams();
   const { user } = useAuth();
+  const { activePeriod } = usePeriod();
 
   const apartmentId = Number(
     routeApartmentId ??
@@ -21,7 +22,6 @@ const ApproveIncomePage = ({ apartmentId: routeApartmentId }) => {
   // 2. Core State
   const [drafts, setDrafts] = useState([]);
   const [selectedIds, setSelectedIds] = useState([]);
-  const [activePeriod, setActivePeriod] = useState(null);
 
   // 3. UI Status State
   const [loading, setLoading] = useState(false);
@@ -62,13 +62,14 @@ const ApproveIncomePage = ({ apartmentId: routeApartmentId }) => {
       setLoading(true);
       setErrorMessage("");
 
-      const period = await masterDataService.getActiveLedgerPeriod(apartmentId);
-      setActivePeriod(period);
+      if (!activePeriod) {
+        throw new Error("Active ledger period is not available.");
+      }
 
       const pendingDrafts = await incomeService.getPendingDrafts(
         apartmentId,
-        period.year,
-        period.month,
+        activePeriod.year,
+        activePeriod.month,
       );
       setDrafts(pendingDrafts);
       setHasSearched(true);
