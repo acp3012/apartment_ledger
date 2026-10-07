@@ -11,5 +11,5 @@ import java.util.Optional;
 public interface ApartmentRepository extends JpaRepository<Apartment, Long> {
 
     List<Apartment> findAll();
-    Optional<Apartment> findById(Long id);
+    Optional<Apartment> findById(Long   id);
 }

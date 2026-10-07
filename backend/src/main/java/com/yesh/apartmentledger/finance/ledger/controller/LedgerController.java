@@ -6,7 +6,6 @@ import com.yesh.apartmentledger.finance.ledger.dto.MonthEndCloseResponse;
 import com.yesh.apartmentledger.finance.ledger.entity.LedgerDetail;
 import com.yesh.apartmentledger.finance.ledger.repository.LedgerDetailRepository;
 import com.yesh.apartmentledger.finance.ledger.service.LedgerService;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -27,7 +26,7 @@ public class LedgerController {
     @GetMapping("/active-period")
     public ResponseEntity<LedgerPeriodResponse> getActiveLedgerPeriod(@PathVariable Long apartmentId){
 
-        return ResponseEntity.ok(ledgerService.getLedgerPeriod(apartmentId));
+        return ResponseEntity.ok(ledgerService.getActiveLedgerPeriod(apartmentId));
     }
 
     //==============================================
@@ -49,7 +48,7 @@ public class LedgerController {
             @RequestParam Short year,
             @RequestParam Short month) {
 
-        return ResponseEntity.ok(ledgerService.getSummary(apartmentId,year,month));
+        return ResponseEntity.ok(ledgerService.getLedgerSummary(apartmentId,year,month));
 
     }
 
@@ -63,11 +62,11 @@ public class LedgerController {
     }
 
     @PostMapping("/close")
-    public ResponseEntity<String> submitClose(
+    public ResponseEntity<String> closeMonthlyLeger(
             @RequestParam Long apartmentId,
             @RequestParam Short year,
             @RequestParam Short month) {
-        return ResponseEntity.ok(ledgerService.closeMonth(apartmentId, year, month));
+        return ResponseEntity.ok(ledgerService.closeActiveAccountPeriod(apartmentId, year, month));
     }
 
 

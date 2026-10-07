@@ -1,10 +1,8 @@
 package com.yesh.apartmentledger.core.flat.controller;
 
-
 import com.yesh.apartmentledger.core.flat.dto.FlatPaymentStatusResponse;
 import com.yesh.apartmentledger.core.flat.dto.FlatResponse;
 import com.yesh.apartmentledger.core.flat.repository.FlatRepository;
-import com.yesh.apartmentledger.finance.income.repository.IncomeRepository;
 import com.yesh.apartmentledger.finance.income.service.IncomeService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;

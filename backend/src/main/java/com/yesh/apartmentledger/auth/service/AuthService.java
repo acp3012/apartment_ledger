@@ -12,6 +12,7 @@ import com.yesh.apartmentledger.exception.BadRequestException;
 import com.yesh.apartmentledger.exception.ResourceNotFoundException;
 import com.yesh.apartmentledger.master.role.entity.Role;
 import com.yesh.apartmentledger.master.role.repository.RoleRepository;
+import lombok.AllArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.nio.file.ReadOnlyFileSystemException;
 
 @Service
+@AllArgsConstructor
 public class AuthService {
 
     private final AppUserRepository appUserRepository;
@@ -28,18 +30,11 @@ public class AuthService {
     private final String DEFAULT_USER = "USER";
     private final String ADMIN_USER = "ADMIN";
 
-    public AuthService(AppUserRepository appUserRepository,
-                       FlatRepository flatRepository,
-                       PasswordEncoder passwordEncoder,
-                       RoleRepository roleRepository
-                       )      {
-
-        this.appUserRepository = appUserRepository;
-        this.flatRepository = flatRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.roleRepository = roleRepository;
-    }
-
+    /**
+     * User registration
+     * @param request User register form
+     * @return AuthResponse
+     */
     @Transactional
     public AuthResponse register(RegisterRequest request) {
         // 1. Check if email already exists to prevent duplicates
@@ -86,6 +81,11 @@ public class AuthService {
         );
     }
 
+    /**
+     * User login
+     * @param request LoginRequest
+     * @return AuthResponse
+     */
     @Transactional(readOnly = true) // <--To avoid Lazyloading error
     public AuthResponse login(LoginRequest request) {
         // 1. Fetch the user manually from the database
