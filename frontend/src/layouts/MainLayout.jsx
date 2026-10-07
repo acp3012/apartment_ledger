@@ -63,23 +63,11 @@ const MainLayout = () => {
             <span>📊</span> Monthly Report
           </button>
 
-          {user.isAdmin && (
-            <>
-              <button
-                onClick={() =>
-                  navigate(`/apartments/${user.apartmentId}/incomes`)
-                }
-                className={`w-full text-left ${sidebarItemClass("/apartments")}`}>
-                <span>💰</span> Income Management
-              </button>
-
-              <button
-                onClick={() => navigate("/dashboard/expense")}
-                className={`w-full text-left ${sidebarItemClass("/dashboard/expense")}`}>
-                <span>💸</span> Expense Management
-              </button>
-            </>
-          )}
+          <button
+            onClick={() => navigate("/dashboard/expense")}
+            className={`w-full text-left ${sidebarItemClass("/dashboard/expense")}`}>
+            <span>💸</span> Ledger Entries
+          </button>
         </div>
 
         {/* Footer info */}
@@ -151,26 +139,14 @@ const MainLayout = () => {
               className="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50">
               Monthly Report
             </button>
-            {user.isAdmin && (
-              <>
-                <button
-                  onClick={() => {
-                    navigate(`/apartments/${user.apartmentId}/incomes`);
-                    setMobileMenuOpen(false);
-                  }}
-                  className="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50">
-                  Income Management
-                </button>
-                <button
-                  onClick={() => {
-                    navigate("/dashboard/expense/draft");
-                    setMobileMenuOpen(false);
-                  }}
-                  className="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50">
-                  Expense Management
-                </button>
-              </>
-            )}
+            <button
+              onClick={() => {
+                navigate("/dashboard/expense");
+                setMobileMenuOpen(false);
+              }}
+              className="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50">
+              Ledger Entries
+            </button>
           </div>
         )}
 

@@ -3,7 +3,6 @@ import { expenseService } from "../api/expenseService";
 import { toast } from "react-toastify";
 import { masterDataService } from "../api/masterDataService";
 import { usePeriod } from "../context/PeriodContext";
-import LedgerPeriodBanner from "../components/LedgerPeriodBanner";
 
 const ExpenseMakerForm = ({ apartmentId, makerId }) => {
   const { activePeriod } = usePeriod();
@@ -165,18 +164,30 @@ const ExpenseMakerForm = ({ apartmentId, makerId }) => {
   };
 
   const handleEdit = (draft) => {
-    const normalizedCategoryName = (draft.ledgerCategoryName || draft.categoryName || "").trim().toLowerCase();
+    const normalizedCategoryName = (
+      draft.ledgerCategoryName ||
+      draft.categoryName ||
+      ""
+    )
+      .trim()
+      .toLowerCase();
     const category = categories.find(
       (item) =>
         String(item.id) === String(draft.ledgerCategoryId) ||
-        item.categoryName?.trim().toLowerCase() === normalizedCategoryName
+        item.categoryName?.trim().toLowerCase() === normalizedCategoryName,
     );
 
-    const normalizedPaymentMode = (draft.paymentModeName || draft.paymentMode || "").trim().toLowerCase();
+    const normalizedPaymentMode = (
+      draft.paymentModeName ||
+      draft.paymentMode ||
+      ""
+    )
+      .trim()
+      .toLowerCase();
     const paymentMode = paymentModes.find(
       (item) =>
         String(item.id) === String(draft.paymentModeId) ||
-        item.name?.trim().toLowerCase() === normalizedPaymentMode
+        item.name?.trim().toLowerCase() === normalizedPaymentMode,
     );
 
     setEditingDraftId(draft.draftId ?? draft.id);
@@ -201,13 +212,12 @@ const ExpenseMakerForm = ({ apartmentId, makerId }) => {
 
   return (
     <div>
-      <LedgerPeriodBanner apartmentId={apartmentId} />
       <form
         onSubmit={handleSubmit}
-        className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        className="mb-8 grid grid-cols-1 gap-4 px-4 pt-4 sm:grid-cols-2 xl:grid-cols-4">
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">
-            Date *
+          <label className="mb-1 block text-sm font-semibold text-slate-800">
+            Transaction Date *
           </label>
           <input
             type="date"
@@ -217,7 +227,7 @@ const ExpenseMakerForm = ({ apartmentId, makerId }) => {
             max={dateBounds.max}
             value={formData.transactionDate}
             onChange={handleChange}
-            className="h-11 w-full rounded border px-3 text-sm"
+            className="h-11 w-full rounded-md border border-slate-400 bg-white px-3 text-sm font-medium text-slate-900 shadow-xs focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-100"
           />
         </div>
 
@@ -440,10 +450,13 @@ const ExpenseMakerForm = ({ apartmentId, makerId }) => {
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <h4 className="break-words font-medium text-gray-900">
-                      {draft.ledgerCategoryName || draft.categoryName || "Uncategorized"}
+                      {draft.ledgerCategoryName ||
+                        draft.categoryName ||
+                        "Uncategorized"}
                     </h4>
                     <p className="mt-1 text-sm text-gray-500">
-                      {draft.transactionDate} · {draft.paymentModeName || draft.paymentMode || "-"}
+                      {draft.transactionDate} ·{" "}
+                      {draft.paymentModeName || draft.paymentMode || "-"}
                     </p>
                   </div>
                   <p className="shrink-0 font-semibold text-gray-900">

@@ -241,10 +241,10 @@ const IncomeTab = ({ apartmentId, makerId }) => {
 
       <form
         onSubmit={handleAddOrUpdate}
-        className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        className="mb-8 grid grid-cols-1 gap-4 px-4 pt-4 md:grid-cols-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Date *
+          <label className="mb-1 block text-sm font-semibold text-slate-800">
+            Transaction Date *
           </label>
           <input
             type="date"
@@ -254,7 +254,7 @@ const IncomeTab = ({ apartmentId, makerId }) => {
             min={dateBounds.min}
             max={dateBounds.max}
             required
-            className="w-full border rounded p-2"
+            className="h-11 w-full rounded-md border border-slate-400 bg-white px-3 text-sm font-medium text-slate-900 shadow-xs focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-100"
           />
         </div>
 

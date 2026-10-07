@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import LedgerPeriodBanner from "../components/LedgerPeriodBanner";
 import IncomeTab from "../components/IncomeTab";
 import ExpenseMakerForm from "./ExpenseMakerForm";
 import ApproveIncomePage from "./ApproveIncomePage";
@@ -17,18 +18,22 @@ const FinanceWorkspacePage = ({
     routeParamId ?? user?.apartmentId ?? user?.apartment_id ?? 0,
   );
   const makerId = Number(user?.id ?? user?.userId ?? 0);
+  const canApprove = user?.isAdmin;
 
   // State for toggles
   const [transactionType, setTransactionType] = useState(defaultType); // "income" or "expense"
   const [mode, setMode] = useState(defaultMode); // "entry" (maker) or "approval" (checker)
+  const isIncome = transactionType === "income";
+  const workspaceTitle = `${transactionType === "income" ? "Income" : "Expense"} ${mode === "entry" ? "Entries" : "Approvals"}`;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       {/* Top Header & Interactive Toggles */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-5 rounded-2xl shadow-sm border border-slate-200 mb-6 gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 capitalize">
-            {transactionType} Management
+          <h2
+            className={`text-2xl font-bold ${isIncome ? "text-emerald-800" : "text-rose-800"}`}>
+            {workspaceTitle}
           </h2>
           <p className="text-sm text-slate-500 mt-0.5">
             {mode === "entry"
@@ -43,26 +48,28 @@ const FinanceWorkspacePage = ({
           <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200">
             <button
               onClick={() => setTransactionType("income")}
+              aria-pressed={isIncome}
               className={`flex-1 md:flex-none px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-                transactionType === "income"
-                  ? "bg-white text-blue-600 shadow-sm"
+                isIncome
+                  ? "bg-emerald-100 text-emerald-800 border border-emerald-200 shadow-sm"
                   : "text-slate-600 hover:text-slate-900"
               }`}>
               Income
             </button>
             <button
               onClick={() => setTransactionType("expense")}
+              aria-pressed={!isIncome}
               className={`flex-1 md:flex-none px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-                transactionType === "expense"
-                  ? "bg-white text-blue-600 shadow-sm"
+                !isIncome
+                  ? "bg-rose-100 text-rose-800 border border-rose-200 shadow-sm"
                   : "text-slate-600 hover:text-slate-900"
               }`}>
               Expenses
             </button>
           </div>
 
-          {/* Maker (Entry) vs Checker (Approval) Toggle - Admin Only or general */}
-          {user?.isAdmin && (
+          {/* Approval actions are shown only to authorized roles. */}
+          {canApprove && (
             <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200">
               <button
                 onClick={() => setMode("entry")}
@@ -86,6 +93,8 @@ const FinanceWorkspacePage = ({
           )}
         </div>
       </div>
+
+      <LedgerPeriodBanner />
 
       {/* Dynamic Workspace Container */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ledgerService } from "../api/ledgerService";
 import { useAuth } from "../context/AuthContext";
 import { usePeriod } from "../context/PeriodContext";
-
+import PeriodManagementComponent from "../components/PeriodManagementComponent";
 const DashboardPage = ({
   apartmentId: routeApartmentId,
   flatId: routeFlatId,
@@ -243,7 +243,7 @@ const DashboardPage = ({
           <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl shadow-sm p-6 text-white flex justify-between items-center">
             <div>
               <p className="text-xs uppercase tracking-wider text-blue-200 font-semibold">
-                Community Books
+                Apartment Ledger Book
               </p>
               <h3 className="text-lg font-bold mt-1">
                 Monthly Statement & Reports
@@ -259,45 +259,49 @@ const DashboardPage = ({
             </button>
           </div>
         </div>
+        {/* RIGHT COLUMN: NOTICE BOARD & PERIOD MANAGEMENT */}
+        <div className="space-y-6">
+          {/* 2. ADD THE PERIOD MANAGEMENT COMPONENT HERE */}
+          <PeriodManagementComponent />
 
-        {/* RIGHT COLUMN: NOTICE BOARD */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="font-bold text-slate-800 text-sm uppercase tracking-wider">
-              Notice Board
-            </h3>
-            <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-md font-medium">
-              Updates
-            </span>
-          </div>
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-bold text-slate-800 text-sm uppercase tracking-wider">
+                Notice Board
+              </h3>
+              <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-md font-medium">
+                Updates
+              </span>
+            </div>
 
-          <div className="space-y-3 overflow-y-auto max-h-[380px] pr-1">
-            {notices.length === 0 ? (
-              <p className="text-slate-400 text-sm text-center py-8">
-                No notices available.
-              </p>
-            ) : (
-              notices.map((notice) => (
-                <div
-                  key={notice.id}
-                  className="p-3 bg-slate-50 rounded-xl border border-slate-100 hover:bg-slate-100/60 transition-colors">
-                  <div className="flex justify-between items-start">
-                    <h4 className="text-xs font-bold text-slate-800">
-                      {notice.title}
-                    </h4>
-                    <span className="text-[10px] text-slate-400">
-                      {notice.postedDate}
-                    </span>
+            <div className="space-y-3 overflow-y-auto max-h-[380px] pr-1">
+              {notices.length === 0 ? (
+                <p className="text-slate-400 text-sm text-center py-8">
+                  No notices available.
+                </p>
+              ) : (
+                notices.map((notice) => (
+                  <div
+                    key={notice.id}
+                    className="p-3 bg-slate-50 rounded-xl border border-slate-100 hover:bg-slate-100/60 transition-colors">
+                    <div className="flex justify-between items-start">
+                      <h4 className="text-xs font-bold text-slate-800">
+                        {notice.title}
+                      </h4>
+                      <span className="text-[10px] text-slate-400">
+                        {notice.postedDate}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                      {notice.message}
+                    </p>
+                    <p className="text-[10px] text-blue-600 font-medium mt-2">
+                      — {notice.postedBy}
+                    </p>
                   </div>
-                  <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                    {notice.message}
-                  </p>
-                  <p className="text-[10px] text-blue-600 font-medium mt-2">
-                    — {notice.postedBy}
-                  </p>
-                </div>
-              ))
-            )}
+                ))
+              )}
+            </div>
           </div>
         </div>
       </div>

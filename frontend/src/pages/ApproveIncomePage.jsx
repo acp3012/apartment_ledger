@@ -268,15 +268,8 @@ const ApproveIncomePage = ({ apartmentId: routeApartmentId }) => {
       {/* MAIN CONTENT AREA */}
       {hasSearched && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          {/* Active Period Banner */}
           {activePeriod && (
-            <div className="bg-slate-50 px-4 md:px-6 py-3 border-b border-gray-200 flex flex-col md:flex-row justify-between items-center gap-2">
-              <span className="text-slate-700 font-medium text-sm md:text-base">
-                Ledger Period:{" "}
-                <span className="font-bold">
-                  {activePeriod.month} / {activePeriod.year}
-                </span>
-              </span>
+            <div className="bg-slate-50 px-4 md:px-6 py-3 border-b border-gray-200 flex justify-end items-center">
               <span className="bg-indigo-100 text-indigo-800 text-xs font-bold px-3 py-1 rounded-full">
                 {drafts.length} Pending
               </span>

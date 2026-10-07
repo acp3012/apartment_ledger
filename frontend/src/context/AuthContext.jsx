@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useState, useContext } from "react";
+import { createContext, useState, useContext, useEffect } from "react";
 
 const AuthContext = createContext(null);
 
@@ -18,10 +18,12 @@ const normalizeUser = (userData) => {
 };
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(() => {
-    const storedUser = localStorage.getItem("app_user");
-    return storedUser ? normalizeUser(JSON.parse(storedUser)) : null;
-  });
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    localStorage.removeItem("app_user");
+    localStorage.removeItem("jwt_token");
+  }, []);
 
   const login = (userData) => {
     const normalizedUser = normalizeUser(userData);

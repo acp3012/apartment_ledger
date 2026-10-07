@@ -6,6 +6,29 @@ import DashboardPage from "./pages/DashboardPage";
 import FinanceWorkspacePage from "./pages/FinanceWorkspacePage";
 import IncomePage from "./pages/IncomePage";
 import MonthlyStatementPage from "./pages/MonthlyStatementPage";
+import { useAuth } from "./context/AuthContext";
+
+const RootRoute = () => {
+  const { user } = useAuth();
+  return (
+    <Navigate
+      to={user ? "/dashboard" : "/login"}
+      replace
+    />
+  );
+};
+
+const PublicOnlyRoute = ({ element }) => {
+  const { user } = useAuth();
+  return user ? (
+    <Navigate
+      to="/dashboard"
+      replace
+    />
+  ) : (
+    element
+  );
+};
 
 function App() {
   return (
@@ -13,26 +36,20 @@ function App() {
       <Routes>
         {/* PUBLIC ROUTES */}
         <Route
+          path="/"
+          element={<RootRoute />}
+        />
+        <Route
           path="/login"
-          element={<LoginPage />}
+          element={<PublicOnlyRoute element={<LoginPage />} />}
         />
         <Route
           path="/register"
-          element={<RegisterPage />}
+          element={<PublicOnlyRoute element={<RegisterPage />} />}
         />
 
         {/* SECURE ROUTES WRAPPED IN SIDEBAR LAYOUT */}
         <Route element={<MainLayout />}>
-          <Route
-            path="/"
-            element={
-              <Navigate
-                to="/dashboard"
-                replace
-              />
-            }
-          />
-
           <Route
             path="/dashboard"
             element={<DashboardPage />}

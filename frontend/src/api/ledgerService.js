@@ -39,5 +39,13 @@ export const ledgerService = {
         // Assumes your backend returns something like: { month: "September", year: 2026 }
         const response = await api.get(`/apartments/${apartmentId}/ledger/active-period`);
         return response.data;
-    }
+    },
+  
+  // Close the active ledger period
+  closeActivePeriod: async (apartmentId, year, month) => {
+    const response = await api.post(`/apartments/${apartmentId}/ledger/close`, null, {
+      params: { apartmentId, year, month }
+    });
+    return response.data;
+  }
 };
