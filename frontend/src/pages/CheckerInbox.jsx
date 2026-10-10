@@ -3,6 +3,7 @@ import { toast } from "react-toastify";
 import { expenseService } from "../api/expenseService";
 import { useAuth } from "../context/AuthContext";
 import { usePeriod } from "../context/PeriodContext";
+import ConfirmationModal from "../components/ConfirmationModal";
 
 const CheckerInbox = ({ apartmentId: routeApartmentId }) => {
   const { user } = useAuth();
@@ -338,78 +339,45 @@ const CheckerInbox = ({ apartmentId: routeApartmentId }) => {
         </div>
       )}
 
-      {/* CONFIRMATION MODAL */}
-      {modalConfig.isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
-            <div
-              className={`px-6 py-4 border-b ${modalConfig.type === "APPROVE" ? "bg-emerald-50" : "bg-red-50"}`}>
-              <h3
-                className={`text-lg font-bold ${modalConfig.type === "APPROVE" ? "text-emerald-800" : "text-red-800"}`}>
-                {modalConfig.title}
-              </h3>
-            </div>
-
-            <div className="p-6">
-              {errorMessage && (
-                <p className="text-red-600 text-sm mb-4 bg-red-50 p-3 rounded-xl">
-                  {errorMessage}
-                </p>
-              )}
-              {modalConfig.type === "APPROVE" ? (
-                <p className="text-slate-600">
-                  You are about to approve{" "}
-                  <strong className="text-slate-900">
-                    {selectedIds.length}
-                  </strong>{" "}
-                  expense entries. These will be added to the official ledger.
-                </p>
-              ) : (
-                <div>
-                  <p className="text-slate-600 text-sm mb-3">
-                    You are rejecting{" "}
-                    <strong className="text-slate-900">
-                      {selectedIds.length}
-                    </strong>{" "}
-                    expense entries. Please provide a reason:
-                  </p>
-                  <textarea
-                    className="w-full border border-slate-300 rounded-xl p-3 text-sm focus:ring-2 focus:ring-red-500 outline-none"
-                    rows="3"
-                    placeholder="e.g., Incorrect amount or incorrect category..."
-                    value={rejectReason}
-                    onChange={(e) => setRejectReason(e.target.value)}
-                  />
-                </div>
-              )}
-            </div>
-
-            <div className="px-6 py-4 bg-slate-50 flex justify-end gap-3 border-t border-slate-100">
-              <button
-                onClick={closeModal}
-                disabled={actionLoading}
-                className="px-4 py-2 text-slate-600 bg-white border border-slate-300 rounded-xl text-sm font-medium">
-                Cancel
-              </button>
-              <button
-                onClick={
-                  modalConfig.type === "APPROVE" ? handleApprove : handleReject
-                }
-                disabled={actionLoading}
-                className={`px-4 py-2 text-white rounded-xl text-sm font-medium flex items-center ${
-                  modalConfig.type === "APPROVE"
-                    ? "bg-emerald-600 hover:bg-emerald-700"
-                    : "bg-red-600 hover:bg-red-700"
-                }`}>
-                {actionLoading && <LoadingSpinner />}
-                {modalConfig.type === "APPROVE"
-                  ? "Confirm Approval"
-                  : "Submit Rejection"}
-              </button>
-            </div>
+      <ConfirmationModal
+        isOpen={modalConfig.isOpen}
+        title={modalConfig.title}
+        variant={modalConfig.type === "APPROVE" ? "success" : "danger"}
+        errorMessage={errorMessage}
+        confirmLabel={
+          modalConfig.type === "APPROVE"
+            ? "Confirm Approval"
+            : "Submit Rejection"
+        }
+        loadingLabel="Processing..."
+        isLoading={actionLoading}
+        onCancel={closeModal}
+        onConfirm={
+          modalConfig.type === "APPROVE" ? handleApprove : handleReject
+        }>
+        {modalConfig.type === "APPROVE" ? (
+          <p className="text-slate-600">
+            You are about to approve{" "}
+            <strong className="text-slate-900">{selectedIds.length}</strong>{" "}
+            expense entries. These will be added to the official ledger.
+          </p>
+        ) : (
+          <div>
+            <p className="mb-3 text-sm text-slate-600">
+              You are rejecting{" "}
+              <strong className="text-slate-900">{selectedIds.length}</strong>{" "}
+              expense entries. Please provide a reason:
+            </p>
+            <textarea
+              className="w-full rounded-xl border border-slate-300 p-3 text-sm outline-none focus:ring-2 focus:ring-red-500"
+              rows="3"
+              placeholder="e.g., Incorrect amount or incorrect category..."
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+            />
           </div>
-        </div>
-      )}
+        )}
+      </ConfirmationModal>
     </div>
   );
 };

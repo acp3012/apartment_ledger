@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { masterDataService } from "../api/masterDataService";
 import { apartmentService } from "../api/apartmentService";
 import { incomeService } from "../api/incomeService";
@@ -29,6 +29,11 @@ const IncomeTab = ({ apartmentId, makerId }) => {
     referenceNumber: "",
     remarks: "",
   });
+
+  const totalAmount = useMemo(
+    () => drafts.reduce((total, draft) => total + Number(draft.amount || 0), 0),
+    [drafts],
+  );
 
   const fetchDrafts = useCallback(
     async (loadedCategories = ledgerCategories) => {
@@ -192,16 +197,6 @@ const IncomeTab = ({ apartmentId, makerId }) => {
     }
   };
 
-  const handleApprove = async (draftId) => {
-    try {
-      await incomeService.approveDraft(apartmentId, draftId);
-      toast.success("Draft approved successfully!");
-      await fetchDrafts();
-    } catch {
-      toast.error("Failed to approve draft.");
-    }
-  };
-
   const handleEdit = (draft) => {
     setEditingDraftId(draft.draftId);
     const defaultMaintenanceId =
@@ -297,13 +292,19 @@ const IncomeTab = ({ apartmentId, makerId }) => {
             <option value="">
               {isMaintenance ? "Select Flat" : "Select Flat (Optional)"}
             </option>
-            {flats.map((flat) => (
-              <option
-                key={flat.id || flat.flatId}
-                value={flat.id || flat.flatId}>
-                {flat.flatNumber}
-              </option>
-            ))}
+            {flats.map((flat) => {
+              const ownerName =
+                flat.ownerName || flat.owner?.name || flat.owner?.ownerName;
+
+              return (
+                <option
+                  key={flat.id || flat.flatId}
+                  value={flat.id || flat.flatId}>
+                  {flat.flatNumber}
+                  {ownerName ? ` — ${ownerName}` : ""}
+                </option>
+              );
+            })}
           </select>
         </div>
 
@@ -402,31 +403,45 @@ const IncomeTab = ({ apartmentId, makerId }) => {
 
       {/* Grid Section */}
       <div>
-        <h3 className="text-lg font-medium text-gray-800 mb-4">Drafts</h3>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <h3 className="text-lg font-medium text-gray-800">Drafts</h3>
+          <div className="flex items-center gap-2 text-sm font-medium text-blue-700">
+            <span className="rounded-full bg-blue-50 px-3 py-1.5">
+              {drafts.length} {drafts.length === 1 ? "entry" : "entries"}
+            </span>
+            <span className="rounded-full bg-blue-50 px-3 py-1.5">
+              Total: ₹
+              {totalAmount.toLocaleString("en-IN", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </span>
+          </div>
+        </div>
         <div className="overflow-x-auto bg-white rounded-lg shadow border border-gray-200">
           <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+            <thead className="bg-blue-50 border-b border-blue-100">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="w-36 px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase">
                   Date
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase">
                   Flat
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase">
                   Category
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase">
                   Amount
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="w-40 px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase">
                   Mode
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Status
+                <th className="w-44 px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase">
+                  Reference
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                  Actions
+                <th className="px-6 py-3 text-right text-xs font-medium text-blue-700 uppercase">
+                  Action
                 </th>
               </tr>
             </thead>
@@ -466,35 +481,16 @@ const IncomeTab = ({ apartmentId, makerId }) => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {draft.paymentModeName}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            draft.approvalStatus === "APPROVED"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-yellow-100 text-yellow-800"
-                          }`}>
-                          {draft.approvalStatus || "Pending"}
-                        </span>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {draft.referenceNumber || "—"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        {draft.approvalStatus !== "APPROVED" ? (
-                          <div className="flex justify-end space-x-3">
-                            <button
-                              type="button"
-                              onClick={() => handleEdit(draft)}
-                              className="text-blue-600 hover:text-blue-900">
-                              Edit
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleApprove(draft.draftId)}
-                              className="text-green-600 hover:text-green-900 font-bold">
-                              Approve
-                            </button>
-                          </div>
-                        ) : (
-                          <span className="text-gray-400 italic">Locked</span>
-                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleEdit(draft)}
+                          className="text-blue-600 hover:text-blue-900">
+                          Edit
+                        </button>
                       </td>
                     </tr>
                   );

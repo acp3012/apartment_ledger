@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { expenseService } from "../api/expenseService";
 import { toast } from "react-toastify";
 import { masterDataService } from "../api/masterDataService";
@@ -15,6 +15,11 @@ const ExpenseMakerForm = ({ apartmentId, makerId }) => {
   const [editingDraftId, setEditingDraftId] = useState(null);
   const [dateBounds, setDateBounds] = useState({ min: "", max: "" });
   const [ledgerPeriod, setLedgerPeriod] = useState({ year: "", month: "" });
+
+  const totalAmount = useMemo(
+    () => drafts.reduce((total, draft) => total + Number(draft.amount || 0), 0),
+    [drafts],
+  );
 
   const initialFormState = {
     categoryId: "",
@@ -351,32 +356,46 @@ const ExpenseMakerForm = ({ apartmentId, makerId }) => {
       <hr className="my-6" />
 
       <div>
-        <h3 className="mb-4 text-lg font-medium text-gray-800">
-          Pending Expense Drafts
-        </h3>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <h3 className="text-lg font-medium text-gray-800">
+            Pending Expense Drafts
+          </h3>
+          <div className="flex items-center gap-2 text-sm font-medium text-blue-700">
+            <span className="rounded-full bg-blue-50 px-3 py-1.5">
+              {drafts.length} {drafts.length === 1 ? "entry" : "entries"}
+            </span>
+            <span className="rounded-full bg-blue-50 px-3 py-1.5">
+              Total: ₹
+              {totalAmount.toLocaleString("en-IN", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </span>
+          </div>
+        </div>
         <div className="hidden overflow-hidden rounded-lg border border-gray-200 bg-white shadow lg:block">
           <table className="w-full table-fixed divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+            <thead className="bg-blue-50 border-b border-blue-100">
               <tr>
-                <th className="w-[13%] px-3 py-3 text-left text-xs font-medium uppercase text-gray-500">
+                <th className="w-[13%] px-3 py-3 text-left text-xs font-medium uppercase text-blue-700">
                   Date
                 </th>
-                <th className="w-[18%] px-3 py-3 text-left text-xs font-medium uppercase text-gray-500">
+                <th className="w-[18%] px-3 py-3 text-left text-xs font-medium uppercase text-blue-700">
                   Category
                 </th>
-                <th className="w-[12%] px-3 py-3 text-left text-xs font-medium uppercase text-gray-500">
+                <th className="w-[12%] px-3 py-3 text-left text-xs font-medium uppercase text-blue-700">
                   Amount
                 </th>
-                <th className="w-[10%] px-3 py-3 text-left text-xs font-medium uppercase text-gray-500">
+                <th className="w-[10%] px-3 py-3 text-left text-xs font-medium uppercase text-blue-700">
                   Mode
                 </th>
-                <th className="w-[15%] px-3 py-3 text-left text-xs font-medium uppercase text-gray-500">
+                <th className="w-[15%] px-3 py-3 text-left text-xs font-medium uppercase text-blue-700">
                   Reference
                 </th>
-                <th className="w-[24%] px-3 py-3 text-left text-xs font-medium uppercase text-gray-500">
+                <th className="w-[24%] px-3 py-3 text-left text-xs font-medium uppercase text-blue-700">
                   Remarks
                 </th>
-                <th className="w-[8%] px-3 py-3 text-right text-xs font-medium uppercase text-gray-500">
+                <th className="w-[8%] px-3 py-3 text-right text-xs font-medium uppercase text-blue-700">
                   Actions
                 </th>
               </tr>
