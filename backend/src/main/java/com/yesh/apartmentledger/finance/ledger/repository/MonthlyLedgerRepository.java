@@ -7,15 +7,13 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface MonthlyLedgerRepository extends JpaRepository<MonthlyLedger, Integer> {
+public interface MonthlyLedgerRepository extends JpaRepository<MonthlyLedger, Long> {
 
     // 1. Fetch a specific ledger (useful for historical reporting)
     Optional<MonthlyLedger> findByApartmentIdAndYearAndMonth(Long apartmentId, Short year, Short month);
 
-    // 2.  Find the currently OPEN month (Required for your IncomeDraftService validation)
-    Optional<MonthlyLedger> findByApartmentIdAndStatus(Long apartmentId, String status);
 
-    // 3. Check if a specific month is explicitly CLOSED
-    boolean existsByApartmentIdAndYearAndMonthAndStatus(Long apartmentId, Short year, Short month, String status);
+    //  Check if a specific month is explicitly CLOSED
+    boolean existsByApartmentIdAndYearAndMonth(Long apartmentId, Short year, Short month);
 
 }

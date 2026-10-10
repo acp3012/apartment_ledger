@@ -3,25 +3,28 @@ package com.yesh.apartmentledger.finance.ledger.controller;
 import com.yesh.apartmentledger.finance.ledger.dto.LedgerPeriodResponse;
 import com.yesh.apartmentledger.finance.ledger.dto.LedgerSummaryResponse;
 import com.yesh.apartmentledger.finance.ledger.dto.MonthEndCloseResponse;
+import com.yesh.apartmentledger.finance.ledger.dto.MonthlyLedgerRequest;
 import com.yesh.apartmentledger.finance.ledger.entity.LedgerDetail;
+import com.yesh.apartmentledger.finance.ledger.entity.MonthlyLedger;
 import com.yesh.apartmentledger.finance.ledger.repository.LedgerDetailRepository;
 import com.yesh.apartmentledger.finance.ledger.service.LedgerService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.net.URI;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/apartments/{apartmentId}/ledger")
 @RequiredArgsConstructor
-@Tag(name = "Ledger report", description = "Provides month wise income and expenses along with balance. ")
+@Tag(name = "Ledger management", description = "Crate onetime ledger setup and provides ledger related services. ")
 public class LedgerController {
 
     private final LedgerService ledgerService;
     private final LedgerDetailRepository ledgerDetailRepository;
-
 
     @GetMapping("/active-period")
     public ResponseEntity<LedgerPeriodResponse> getActiveLedgerPeriod(@PathVariable Long apartmentId){
@@ -60,6 +63,22 @@ public class LedgerController {
             @RequestParam Short month) {
         return ResponseEntity.ok(ledgerService.previewMonthEndClose(apartmentId, year, month));
     }
+    //====================================
+    // POST calls
+    //======================================
+    @PostMapping("/opening-balance")
+    public ResponseEntity<MonthlyLedger> createMonthlyLedger(
+            @PathVariable Long apartmentId,
+            @RequestBody MonthlyLedgerRequest monthlyLedgerRequest){
+        var response =  ledgerService.createMonthlyLedger(apartmentId,monthlyLedgerRequest);
+        URI location = ServletUriComponentsBuilder
+                .fromCurrentRequest()    // Captures "http://localhost:8080/api/users"
+                .path("/{id}")          // Appends "/{id}" placeholder
+                .buildAndExpand(response.getId()) // Replaces "{id}" with the actual entity ID
+                .toUri();
+        return ResponseEntity.created(location).body(response);
+
+    }
 
     @PostMapping("/close")
     public ResponseEntity<String> closeMonthlyLeger(
@@ -68,6 +87,4 @@ public class LedgerController {
             @RequestParam Short month) {
         return ResponseEntity.ok(ledgerService.closeActiveAccountPeriod(apartmentId, year, month));
     }
-
-
 }

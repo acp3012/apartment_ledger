@@ -28,27 +28,9 @@ CREATE TABLE finance.ledger_period (
 	
 );
 
-INSERT INTO finance.ledger_period (apartment_id,active_year,active_month) values (1,2026,8)
+--INSERT INTO finance.ledger_period (apartment_id,active_year,active_month) values (1,2026,8)
 
-
-/*
-CREATE TABLE finance.legacy_arrear
-(
-    legacy_arrear_id   BIGSERIAL PRIMARY KEY,
-    apartment_id       BIGINT NOT NULL,
-    flat_id            BIGINT NOT NULL UNIQUE, -- Only one record per flat
-    arrear_amount      NUMERIC(10,2) NOT NULL CHECK(arrear_amount > 0),
-    is_cleared         BOOLEAN NOT NULL DEFAULT FALSE,
-    cleared_date       TIMESTAMP,
-    created_date       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT fk_la_apartment FOREIGN KEY(apartment_id) REFERENCES core.apartment(apartment_id),
-    CONSTRAINT fk_la_flat FOREIGN KEY(flat_id) REFERENCES core.flat(flat_id)
-);
-*/
-CREATE INDEX idx_legacy_arrear_flat_id
-ON finance.legacy_arrear(flat_id);
-
+--- advance 
 CREATE TABLE finance.maintenance_advance (
 	maintenance_advance BIGSERIAL PRIMARY KEY,
 	flat_id                  BIGINT  NOT    NULL,
@@ -141,88 +123,13 @@ ON finance.maintenance_due(due_status);
 CREATE INDEX idx_due_month
 ON finance.maintenance_due(txn_year,txn_month);
 
----- 
-CREATE TABLE finance.maintenance_payment
-(
-    maintenance_payment_id   BIGSERIAL PRIMARY KEY,
-    apartment_id             BIGINT NOT NULL,
-    flat_id                  BIGINT NOT NULL,
-    transaction_date         DATE NOT NULL,
-    txn_year                 SMALLINT NOT NULL CHECK (txn_year BETWEEN 2000 AND 2100), -- Typo fixed
-    txn_month                SMALLINT NOT NULL CHECK (txn_month BETWEEN 1 AND 12),
-    amount                   NUMERIC(12,2) NOT NULL CHECK(amount > 0),
-    payment_mode_id          BIGINT NOT NULL,
-    reference_number         VARCHAR(50),
-    remarks                  VARCHAR(500),
-    created_by               BIGINT NOT NULL,
-    created_date             TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    approved_by              BIGINT NOT NULL,
-    approved_date            TIMESTAMP NOT NULL,
 
-    CONSTRAINT fk_mp_apartment
-        FOREIGN KEY(apartment_id) REFERENCES core.apartment(apartment_id),
-        
-    CONSTRAINT fk_mp_flat
-        FOREIGN KEY(flat_id) REFERENCES core.flat(flat_id),
-
-    -- Missing FKs added below:
-    CONSTRAINT fk_mp_payment_mode
-        FOREIGN KEY(payment_mode_id) REFERENCES master.payment_mode(payment_mode_id),
-
-    CONSTRAINT fk_mp_created_by
-        FOREIGN KEY(created_by) REFERENCES core.app_user(user_id),
-
-    CONSTRAINT fk_mp_approved_by
-        FOREIGN KEY(approved_by) REFERENCES core.app_user(user_id)
-);
-
-COMMENT ON TABLE finance.maintenance_payment IS 'Final, approved maintenance payments. Immutable ledger.';
-
-
-CREATE TABLE finance.maintenance_payment
-(
-    maintenance_payment_id   BIGSERIAL PRIMARY KEY,
-    apartment_id             BIGINT NOT NULL,
-    flat_id                  BIGINT NOT NULL,
-    transaction_date         DATE NOT NULL,
-    txn_year                 SMALLINT NOT NULL CHECK (txn_year BETWEEN 2000 AND 2100), -- Typo fixed
-    txn_month                SMALLINT NOT NULL CHECK (txn_month BETWEEN 1 AND 12),
-    amount                   NUMERIC(12,2) NOT NULL CHECK(amount > 0),
-mvn spring-boot:run    payment_mode_id          BIGINT NOT NULL,
-    reference_number         VARCHAR(50),
-    remarks                  VARCHAR(500),
-    created_by               BIGINT NOT NULL,
-    created_date             TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    approved_by              BIGINT NOT NULL,
-    approved_date            TIMESTAMP NOT NULL,
-
-    CONSTRAINT fk_mp_apartment
-        FOREIGN KEY(apartment_id) REFERENCES core.apartment(apartment_id),
-        
-    CONSTRAINT fk_mp_flat
-        FOREIGN KEY(flat_id) REFERENCES core.flat(flat_id),
-
-    -- Missing FKs added below:
-    CONSTRAINT fk_mp_payment_mode
-        FOREIGN KEY(payment_mode_id) REFERENCES master.payment_mode(payment_mode_id),
-
-    CONSTRAINT fk_mp_created_by
-        FOREIGN KEY(created_by) REFERENCES core.app_user(user_id),
-
-    CONSTRAINT fk_mp_approved_by
-        FOREIGN KEY(approved_by) REFERENCES core.app_user(user_id)
-);
-
-COMMENT ON TABLE finance.maintenance_payment IS 'Final, approved maintenance payments. Immutable ledger.';
-
-CREATE INDEX idx_payment_flat
-ON finance.maintenance_payment(apartment_id,flat_id);
 
 
 ---- ledger 
-/*
+
 CREATE TABLE finance.monthly_ledger (
-    monthly_ledger_id  SERIAL PRIMARY KEY,
+    monthly_ledger_id  BIGSERIAL PRIMARY KEY,
     apartment_id       BIGINT NOT NULL, 
     month              SMALLINT NOT NULL CHECK (month BETWEEN 1 AND 12),
     year               SMALLINT NOT NULL CHECK (year BETWEEN 1900 AND 2100),
@@ -240,31 +147,8 @@ CREATE TABLE finance.monthly_ledger (
     -- Ensures we only ever have ONE ledger per month per apartment
     CONSTRAINT uq_monthly_ledger_period UNIQUE (apartment_id, year, month)
 );
-*/
 
-CREATE TABLE finance.monthly_ledger (
-    monthly_ledger_id  SERIAL PRIMARY KEY,
-    apartment_id       BIGINT NOT NULL, 
-    month              SMALLINT NOT NULL CHECK (month BETWEEN 1 AND 12),
-    year               SMALLINT NOT NULL CHECK (year BETWEEN 1900 AND 2100),
-    opening_balance    NUMERIC(16,2),
-    income             NUMERIC(12,2),
-    expense            NUMERIC(12,2),
-    closing_balance    NUMERIC(16,2) GENERATED ALWAYS AS (
-                           COALESCE(opening_balance, 0) + 
-                           COALESCE(income, 0) - 
-                           COALESCE(expense, 0)
-                       ) STORED,
-    status 				VARCHAR(15) NOT NULL DEFAULT 'OPEN' CHECK (status IN ('OPEN', 'CLOSED')),
-    created_date       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_date       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    -- Ensures we only ever have ONE ledger per month per apartment
-    CONSTRAINT uq_monthly_ledger_period UNIQUE (apartment_id, year, month)
-);
-
--- Optional: Ensure only ONE month can be OPEN per apartment at any time
-CREATE UNIQUE INDEX idx_unique_open_ledger ON finance.monthly_ledger (apartment_id) WHERE status = 'OPEN';
 
 
 

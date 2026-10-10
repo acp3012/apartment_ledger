@@ -11,8 +11,9 @@ import java.util.Optional;
 public interface LedgerPeriodRepository extends JpaRepository<LedgerPeriod,Long> {
 
     /**
-     * @param id must not be {@literal null}.
+     * @param apartmentId must not be {@literal null}.
      * @return LedgerPeriod
      */
-     Optional<LedgerPeriod> findById(@NonNull Long id) ;
+     Optional<LedgerPeriod> findById(@NonNull Long apartmentId) ;
+
 }

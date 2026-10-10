@@ -5,15 +5,14 @@ import com.yesh.apartmentledger.core.apartment.repository.ApartmentRepository;
 import com.yesh.apartmentledger.core.enums.ApprovalStatusEnum;
 import com.yesh.apartmentledger.exception.BadRequestException;
 import com.yesh.apartmentledger.exception.ResourceNotFoundException;
-import com.yesh.apartmentledger.finance.expense.entity.ExpenseDraft;
 import com.yesh.apartmentledger.finance.expense.repository.ExpenseDraftRepository;
 import com.yesh.apartmentledger.finance.expense.repository.ExpenseRepository;
-import com.yesh.apartmentledger.finance.income.entity.IncomeDraft;
 import com.yesh.apartmentledger.finance.income.repository.IncomeDraftRepository;
 import com.yesh.apartmentledger.finance.income.repository.IncomeRepository;
 import com.yesh.apartmentledger.finance.ledger.dto.LedgerPeriodResponse;
 import com.yesh.apartmentledger.finance.ledger.dto.LedgerSummaryResponse;
 import com.yesh.apartmentledger.finance.ledger.dto.MonthEndCloseResponse;
+import com.yesh.apartmentledger.finance.ledger.dto.MonthlyLedgerRequest;
 import com.yesh.apartmentledger.finance.ledger.entity.MonthlyLedger;
 import com.yesh.apartmentledger.finance.ledger.repository.LedgerPeriodRepository;
 import com.yesh.apartmentledger.finance.ledger.repository.MonthlyLedgerRepository;
@@ -24,7 +23,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
-import java.util.List;
 import java.util.Optional;
 // ... imports
 
@@ -46,7 +44,7 @@ public class LedgerService {
         return new LedgerPeriodResponse(apartmentId, ledgerPeriod.getActiveYear(), ledgerPeriod.getActiveMonth(),ledgerPeriod.getMonthName());
     }
 
-    // Get Ledger summary (Previous month Opening Balance, current month income & expense.
+    // Get Ledger summary Previous month Opening Balance, current month income & expense.
 
     @Transactional(readOnly = true)
     /*
@@ -207,5 +205,32 @@ public class LedgerService {
         }
         return openingBalance;
     }
+    // Create opening balance
+    @Transactional
+    public MonthlyLedger createMonthlyLedger(Long apartmentId, MonthlyLedgerRequest request) {
 
+        var apartment = apartmentRepository.findById(apartmentId).orElseThrow(()-> new ResourceNotFoundException("Apartment id not found"));
+        var openingYearMonth = YearMonth.of(apartment.getGoLiveYear(), apartment.getGoLiveMonth());
+        var requestYearMonth = YearMonth.of(request.year(), request.month());
+
+        if (requestYearMonth.isBefore(openingYearMonth)) {
+            throw new BadRequestException("Ledger manual creation must be period period to apartment go live period.");
+        }
+
+        var hasLedger = monthlyLedgerRepository.existsByApartmentIdAndYearAndMonth(apartmentId, request.year(),request.month());
+        if(hasLedger){
+            throw new BadRequestException("Ledger entry already present for this apartment year/month " + request.year() + " / " + request.month());
+        }
+        MonthlyLedger ledger = new MonthlyLedger();
+         ledger.setApartment(apartment);
+         ledger.setYear(request.year());
+         ledger.setMonth(request.month());
+         ledger.setOpeningBalance(request.openingBalance());
+         ledger.setIncome(request.income());
+         ledger.setExpense(request.expense());
+         //closing balance is derived field
+         monthlyLedgerRepository.save(ledger);
+         return ledger;
+
+     }
 }

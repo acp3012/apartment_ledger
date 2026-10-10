@@ -2,13 +2,11 @@ package com.yesh.apartmentledger.finance.ledger.entity;
 
 import com.yesh.apartmentledger.common.entity.BaseAuditEntity;
 import com.yesh.apartmentledger.core.apartment.entity.Apartment;
-import com.yesh.apartmentledger.core.enums.LedgerStatusEnum;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(schema = "finance", name = "monthly_ledger")
@@ -19,7 +17,7 @@ public class MonthlyLedger extends BaseAuditEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "monthly_ledger_id")
-    private Integer id; // SERIAL is a 32-bit integer in Postgres
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "apartment_id", nullable = false)
@@ -43,8 +41,5 @@ public class MonthlyLedger extends BaseAuditEntity {
     // Database generates this, so Hibernate should only read it!
     @Column(name = "closing_balance", precision = 16, scale = 2, insertable = false, updatable = false)
     private BigDecimal closingBalance;
-
-    @Column(name = "status", nullable = false)
-    private String status = LedgerStatusEnum.OPEN.name() ;
 
 }

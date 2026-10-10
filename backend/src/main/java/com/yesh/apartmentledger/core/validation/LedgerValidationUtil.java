@@ -4,10 +4,9 @@ import com.yesh.apartmentledger.core.apartment.entity.Apartment;
 import com.yesh.apartmentledger.core.apartment.repository.ApartmentRepository;
 import com.yesh.apartmentledger.exception.BadRequestException;
 import com.yesh.apartmentledger.exception.ResourceNotFoundException;
+import com.yesh.apartmentledger.finance.ledger.repository.LedgerPeriodRepository;
 import com.yesh.apartmentledger.finance.ledger.repository.MonthlyLedgerRepository;
 import lombok.RequiredArgsConstructor;
-import org.hibernate.annotations.NotFound;
-import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -16,9 +15,8 @@ import java.time.LocalDate;
 @RequiredArgsConstructor
 public class LedgerValidationUtil {
 
-    private final MonthlyLedgerRepository monthlyLedgerRepository;
     private final ApartmentRepository apartmentRepository;
-
+    private final LedgerPeriodRepository ledgerPeriodRepository;
 
     public void validateBillingPeriod(Long apartmentId, LocalDate transactionDate) {
         var apartment = apartmentRepository.findById(apartmentId).orElseThrow(()-> new ResourceNotFoundException("Apartment not found for Id " + apartmentId));
@@ -45,15 +43,14 @@ public class LedgerValidationUtil {
             }
         }
 
-        // 2. VAULT DOOR RULE: Cannot post if the month is already closed
-        boolean isMonthClosed = monthlyLedgerRepository.existsByApartmentIdAndYearAndMonthAndStatus(
-                apartment.getId(), txnYear, txnMonth,"CLOSED");
-
-        if (isMonthClosed) {
-            throw new BadRequestException(
-                    "The ledger for " + txnMonth + "/" + txnYear + " is already closed. " +
-                            "No further transactions can be drafted or approved for this period."
-            );
+        var activePeriod =  ledgerPeriodRepository.findById(apartment.getId())
+                .orElseThrow(()-> new ResourceNotFoundException("Ledger period not found for the apartment."));
+        if (!activePeriod.getActiveYear().equals(txnYear) || !activePeriod.getActiveMonth().equals(txnMonth)){
+            throw new BadRequestException("Active ledger period "
+                    + activePeriod.getActiveYear() + " / " + activePeriod.getActiveMonth()
+                    + " does not fall in transaction date" );
         }
+
+
     }
 }
