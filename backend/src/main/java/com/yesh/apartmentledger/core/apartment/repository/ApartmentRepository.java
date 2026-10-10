@@ -12,4 +12,5 @@ public interface ApartmentRepository extends JpaRepository<Apartment, Long> {
 
     List<Apartment> findAll();
     Optional<Apartment> findById(Long   id);
+    boolean existsByApartmentCode(String apartmentCode);
 }

@@ -8,6 +8,8 @@ import com.yesh.apartmentledger.finance.ledger.entity.LedgerDetail;
 import com.yesh.apartmentledger.finance.ledger.entity.MonthlyLedger;
 import com.yesh.apartmentledger.finance.ledger.repository.LedgerDetailRepository;
 import com.yesh.apartmentledger.finance.ledger.service.LedgerService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -20,14 +22,17 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/apartments/{apartmentId}/ledger")
 @RequiredArgsConstructor
-@Tag(name = "Ledger management", description = "Crate onetime ledger setup and provides ledger related services. ")
+@Tag(name = "Ledger management", description = "Manage apartment ledger periods, balances, details, and summaries.")
 public class LedgerController {
 
     private final LedgerService ledgerService;
     private final LedgerDetailRepository ledgerDetailRepository;
 
+        @Operation(summary = "Get the active ledger period",
+            description = "Returns the currently active ledger period for the specified apartment.")
     @GetMapping("/active-period")
-    public ResponseEntity<LedgerPeriodResponse> getActiveLedgerPeriod(@PathVariable Long apartmentId){
+        public ResponseEntity<LedgerPeriodResponse> getActiveLedgerPeriod(
+            @Parameter(description = "ID of the apartment.") @PathVariable Long apartmentId) {
 
         return ResponseEntity.ok(ledgerService.getActiveLedgerPeriod(apartmentId));
     }
@@ -35,40 +40,50 @@ public class LedgerController {
     //==============================================
     // Get income and expense summary for a period
     //================================================
+        @Operation(summary = "Get ledger details",
+            description = "Returns the ledger entries for an apartment in the specified year and month.")
     @GetMapping("/details")
     public ResponseEntity<List<LedgerDetail>>  getLedgerDetails(
-            @PathVariable Long apartmentId,
-            @RequestParam Short year,
-            @RequestParam Short month) {
+            @Parameter(description = "ID of the apartment.") @PathVariable Long apartmentId,
+            @Parameter(description = "Calendar year of the ledger period.") @RequestParam Short year,
+            @Parameter(description = "Month of the ledger period, from 1 to 12.") @RequestParam Short month) {
 
         return ResponseEntity.ok(ledgerDetailRepository
                 .findByApartmentAndOptionalPeriod(apartmentId, year,month));
     }
     // Ledger Summary
+        @Operation(summary = "Get ledger summary",
+            description = "Returns income, expense, and balance totals for an apartment's specified ledger month.")
     @GetMapping("/summary")
     public ResponseEntity<LedgerSummaryResponse>  getLedgerSummary(
-            @PathVariable Long apartmentId,
-            @RequestParam Short year,
-            @RequestParam Short month) {
+            @Parameter(description = "ID of the apartment.") @PathVariable Long apartmentId,
+            @Parameter(description = "Calendar year of the ledger period.") @RequestParam Short year,
+            @Parameter(description = "Month of the ledger period, from 1 to 12.") @RequestParam Short month) {
 
         return ResponseEntity.ok(ledgerService.getLedgerSummary(apartmentId,year,month));
 
     }
 
     // Summary
+    @Operation(summary = "Preview month-end ledger close",
+        description = "Calculates the month-end close result for the specified period without closing it.")
     @GetMapping("/preview")
     public ResponseEntity<MonthEndCloseResponse> previewClose(
-            @PathVariable  Long apartmentId,
-            @RequestParam Short year,
-            @RequestParam Short month) {
+        @Parameter(description = "ID of the apartment.") @PathVariable Long apartmentId,
+        @Parameter(description = "Calendar year of the ledger period.") @RequestParam Short year,
+        @Parameter(description = "Month of the ledger period, from 1 to 12.") @RequestParam Short month) {
         return ResponseEntity.ok(ledgerService.previewMonthEndClose(apartmentId, year, month));
     }
     //====================================
     // POST calls
     //======================================
+        @Operation(summary = "Create a monthly ledger",
+            description = "Creates the apartment's monthly ledger using the supplied opening-balance details.")
     @PostMapping("/opening-balance")
     public ResponseEntity<MonthlyLedger> createMonthlyLedger(
-            @PathVariable Long apartmentId,
+            @Parameter(description = "ID of the apartment.") @PathVariable Long apartmentId,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                description = "Opening-balance details for the monthly ledger.", required = true)
             @RequestBody MonthlyLedgerRequest monthlyLedgerRequest){
         var response =  ledgerService.createMonthlyLedger(apartmentId,monthlyLedgerRequest);
         URI location = ServletUriComponentsBuilder
@@ -80,11 +95,14 @@ public class LedgerController {
 
     }
 
+        @Operation(summary = "Close a monthly ledger period",
+            description = "Closes the specified apartment ledger period and returns a confirmation message.")
     @PostMapping("/close")
     public ResponseEntity<String> closeMonthlyLeger(
+            @Parameter(description = "ID of the apartment whose ledger period is being closed.")
             @RequestParam Long apartmentId,
-            @RequestParam Short year,
-            @RequestParam Short month) {
+            @Parameter(description = "Calendar year of the ledger period.") @RequestParam Short year,
+            @Parameter(description = "Month of the ledger period, from 1 to 12.") @RequestParam Short month) {
         return ResponseEntity.ok(ledgerService.closeActiveAccountPeriod(apartmentId, year, month));
     }
 }
