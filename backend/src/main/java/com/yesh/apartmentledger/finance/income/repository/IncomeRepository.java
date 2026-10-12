@@ -2,7 +2,6 @@ package com.yesh.apartmentledger.finance.income.repository;
 
 import com.yesh.apartmentledger.finance.income.dto.PaymentModeIncomeSummary;
 import com.yesh.apartmentledger.finance.income.entity.Income;
-import com.yesh.apartmentledger.finance.income.entity.IncomeDraft;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

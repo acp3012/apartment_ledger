@@ -10,6 +10,7 @@ import jakarta.validation.constraints.Min;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,6 +19,7 @@ import java.util.List;
 @RestController
 @AllArgsConstructor
 @RequestMapping("/api/v1/apartments/{apartmentId}/expenses")
+@PreAuthorize("@apartmentAuthorization.canAccess(#p0)")
 
 @Tag(name = "Expense management",
     description = "Manage expense drafts, approvals, approved expenses, and expense summaries for an apartment.")
@@ -87,6 +89,7 @@ public class ExpenseController {
 
     @Operation(summary = "Approve expense drafts",
         description = "Approves the drafts identified in the request for the specified apartment.")
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/drafts/approve-bulk")
     public ResponseEntity<String> approveDrafts(
         @Parameter(description = "ID of the apartment.") @PathVariable Long apartmentId,
@@ -98,6 +101,7 @@ public class ExpenseController {
 
         @Operation(summary = "Reject expense drafts",
             description = "Rejects the drafts identified in the request for the specified apartment.")
+        @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/drafts/reject-bulk")
     public ResponseEntity<String> rejectDrafts(
             @Parameter(description = "ID of the apartment.") @PathVariable Long apartmentId,

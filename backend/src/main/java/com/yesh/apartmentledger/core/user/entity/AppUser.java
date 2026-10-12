@@ -77,7 +77,7 @@ public class AppUser extends BaseAuditEntity {
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_role",
-            schema = "core", // Uncomment and adjust if your table is in a specific schema
+            schema = "core",
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )

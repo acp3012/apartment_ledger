@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -22,6 +23,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/apartments/{apartmentId}/ledger")
 @RequiredArgsConstructor
+@PreAuthorize("@apartmentAuthorization.canAccess(#p0)")
 @Tag(name = "Ledger management", description = "Manage apartment ledger periods, balances, details, and summaries.")
 public class LedgerController {
 
@@ -79,6 +81,7 @@ public class LedgerController {
     //======================================
         @Operation(summary = "Create a monthly ledger",
             description = "Creates the apartment's monthly ledger using the supplied opening-balance details.")
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/opening-balance")
     public ResponseEntity<MonthlyLedger> createMonthlyLedger(
             @Parameter(description = "ID of the apartment.") @PathVariable Long apartmentId,
@@ -97,6 +100,7 @@ public class LedgerController {
 
         @Operation(summary = "Close a monthly ledger period",
             description = "Closes the specified apartment ledger period and returns a confirmation message.")
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/close")
     public ResponseEntity<String> closeMonthlyLeger(
             @Parameter(description = "ID of the apartment whose ledger period is being closed.")

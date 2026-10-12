@@ -5,7 +5,6 @@ import com.yesh.apartmentledger.core.apartment.repository.ApartmentRepository;
 import com.yesh.apartmentledger.exception.BadRequestException;
 import com.yesh.apartmentledger.exception.ResourceNotFoundException;
 import com.yesh.apartmentledger.finance.ledger.repository.LedgerPeriodRepository;
-import com.yesh.apartmentledger.finance.ledger.repository.MonthlyLedgerRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

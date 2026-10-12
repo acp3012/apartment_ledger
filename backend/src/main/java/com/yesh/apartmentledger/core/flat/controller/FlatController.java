@@ -6,6 +6,7 @@ import com.yesh.apartmentledger.core.flat.repository.FlatRepository;
 import com.yesh.apartmentledger.finance.income.service.IncomeService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -14,6 +15,7 @@ import java.util.stream.Collectors;
 @RestController
 @AllArgsConstructor
 @RequestMapping("/api/v1/apartments/{apartmentId}/flats")
+@PreAuthorize("@apartmentAuthorization.canAccess(#p0)")
 public class FlatController {
 
     private final FlatRepository flatRepository;

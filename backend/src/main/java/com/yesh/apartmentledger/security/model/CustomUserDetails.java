@@ -5,11 +5,9 @@ import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.stereotype.Service;
 
 import java.util.Collection;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Locale;
 
 @Getter
 
@@ -19,6 +17,8 @@ public class CustomUserDetails implements UserDetails {
     private final String password;
     private final Long apartmentId;
     private final Long flatId;
+    private final boolean enabled;
+    private final boolean accountNonLocked;
     private final Collection<? extends GrantedAuthority> authorities;
 
     public CustomUserDetails(AppUser appUser) {
@@ -26,12 +26,14 @@ public class CustomUserDetails implements UserDetails {
         this.password = appUser.getPasswordHash();
         this.apartmentId = appUser.getApartment().getId();
         this.flatId = appUser.getFlat() != null ? appUser.getFlat().getId() : null;
+        this.enabled = Boolean.TRUE.equals(appUser.getIsActive());
+        this.accountNonLocked = !Boolean.TRUE.equals(appUser.getIsLocked());
 
         // Map the user's role from the Master schema to a Spring Security authority
 
         this.authorities = appUser.getRoles().stream()
-                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getRoleName().toUpperCase()))
-                .collect(Collectors.toList());
+            .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getRoleName().toUpperCase(Locale.ROOT)))
+            .toList();
     }
 
     @Override
@@ -43,9 +45,9 @@ public class CustomUserDetails implements UserDetails {
     @Override
     public boolean isAccountNonExpired() { return true; }
     @Override
-    public boolean isAccountNonLocked() { return true; }
+    public boolean isAccountNonLocked() { return accountNonLocked; }
     @Override
     public boolean isCredentialsNonExpired() { return true; }
     @Override
-    public boolean isEnabled() { return true; }
+    public boolean isEnabled() { return enabled; }
 }

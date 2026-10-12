@@ -30,7 +30,9 @@ public class JwtService {
         Map<String, Object> claims = new HashMap<>();
         claims.put("apartmentId", userDetails.getApartmentId());
         claims.put("flatId", userDetails.getFlatId());
-        claims.put("role", userDetails.getAuthorities().iterator().next().getAuthority());
+        claims.put("roles", userDetails.getAuthorities().stream()
+            .map(authority -> authority.getAuthority())
+            .toList());
 
         return Jwts.builder()
                 .claims(claims)

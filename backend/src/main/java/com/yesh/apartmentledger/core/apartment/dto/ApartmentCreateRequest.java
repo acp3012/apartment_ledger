@@ -15,6 +15,7 @@ public record ApartmentCreateRequest(
         @Size(max = 100) String bankName,
         @Size(max = 30) String accountNumber,
         @Size(max = 20) String ifscCode,
+        @Min (2000) @Max(2100)
         Short goLiveYear,
         @Min(1) @Max(12) Short goLiveMonth
 ) {

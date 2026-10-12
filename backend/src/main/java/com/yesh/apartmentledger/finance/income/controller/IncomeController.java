@@ -8,14 +8,15 @@ import com.yesh.apartmentledger.finance.income.service.IncomeService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
 @AllArgsConstructor
 @RequestMapping("/api/v1/apartments/{apartmentId}/incomes")
+@PreAuthorize("@apartmentAuthorization.canAccess(#p0)")
 @Tag(name= "Income management.",
         description = "API to manage income records of the apartment. Draft are unapproved entries. Once approved it becomes income.")
 
@@ -59,6 +60,7 @@ public class IncomeController {
     }
 
     // 3. UPDATE: Approve a batch of drafts
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/drafts/approve-bulk")
     public ResponseEntity<String> approveDrafts(
             @PathVariable Long apartmentId,
@@ -67,6 +69,7 @@ public class IncomeController {
         String result = incomeDraftService.draftApprovalDecision(apartmentId, request,ApprovalStatusEnum.APPROVED);
         return ResponseEntity.ok(result);
     }
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/drafts/reject-bulk")
     public ResponseEntity<String> rejectDrafts(
             @PathVariable Long apartmentId,

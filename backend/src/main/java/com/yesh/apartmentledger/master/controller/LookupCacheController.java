@@ -5,6 +5,7 @@ import com.yesh.apartmentledger.master.cache.LookupCacheService;
 import com.yesh.apartmentledger.master.ledgercategory.entity.LedgerCategory;
 import com.yesh.apartmentledger.master.paymentmode.entity.PaymentMode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -53,6 +54,7 @@ public class LookupCacheController {
     // POST Refresh Cache
     //#######################################
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/refresh-cache")
     public ResponseEntity<String> refreshCache() {
         cacheService.refreshCache();

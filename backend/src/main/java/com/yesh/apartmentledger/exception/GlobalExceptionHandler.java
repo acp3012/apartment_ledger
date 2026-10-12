@@ -2,8 +2,8 @@ package com.yesh.apartmentledger.exception;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -35,6 +35,14 @@ public class GlobalExceptionHandler {
         return formatErrorResponse("Internal Server Error","An unexpected error occurred. Please try again later.",HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiErrorResponse> handleValidationException(MethodArgumentNotValidException ex) {
+        String msg = ex.getBindingResult().getFieldErrors().stream()
+            .findFirst()
+            .map(err -> err.getDefaultMessage())
+            .orElse("Invalid request");
+        return formatErrorResponse("BAD_REQUEST", msg, HttpStatus.BAD_REQUEST);
+    }
     //==============================================================
     // Database level error : Catches Foreign Key failures triggered by getReferenceById()
     //==============================================================

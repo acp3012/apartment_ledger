@@ -3,7 +3,6 @@ package com.yesh.apartmentledger.finance.expense.entity;
 import com.yesh.apartmentledger.core.apartment.entity.Apartment;
 
 import com.yesh.apartmentledger.core.user.entity.AppUser;
-import com.yesh.apartmentledger.master.approvalstatus.entity.ApprovalStatus;
 import com.yesh.apartmentledger.master.ledgercategory.entity.LedgerCategory;
 
 import com.yesh.apartmentledger.master.paymentmode.entity.PaymentMode;

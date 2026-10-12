@@ -14,6 +14,7 @@ import java.net.URI;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -35,11 +36,13 @@ public class ApartmentController {
     @Operation (summary = "Get all apartments",
             description = "Returns a list of all apartments, including their details and active status.")
     @GetMapping()
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<ApartmentResponse>> getAllApartments() {
         return ResponseEntity.ok(apartmentService.getAllApartments());
     }
         
     @GetMapping("/{apartmentId}")
+    @PreAuthorize("@apartmentAuthorization.canAccess(#p0)")
     @Operation(summary = "Get an apartment by ID",
             description = "Returns the details of a specific apartment based on its ID.")
     public ResponseEntity<ApartmentResponse> getApartmentById(
@@ -50,6 +53,7 @@ public class ApartmentController {
     // create apartment
     @Operation(summary = "Create an apartment",
             description = "Creates an apartment with the supplied details. New apartments are active by default.")
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<ApartmentResponse> createApartment(
             @Valid @RequestBody ApartmentCreateRequest request) {
@@ -64,6 +68,7 @@ public class ApartmentController {
     // update active status of apartment
     @Operation(summary = "Enable or disable an apartment",
             description = "Updates only the apartment's active status; other apartment details remain unchanged.")
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{apartmentId}")
     public ResponseEntity<ApartmentResponse> updateActiveStatus(
             @Parameter(description = "ID of the apartment.") @PathVariable Long apartmentId,

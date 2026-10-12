@@ -10,14 +10,14 @@ import com.yesh.apartmentledger.core.user.repository.AppUserRepository;
 import com.yesh.apartmentledger.exception.BadRequestException;
 
 import com.yesh.apartmentledger.exception.ResourceNotFoundException;
-import com.yesh.apartmentledger.master.role.entity.Role;
 import com.yesh.apartmentledger.master.role.repository.RoleRepository;
+import com.yesh.apartmentledger.security.model.CustomUserDetails;
+import com.yesh.apartmentledger.security.service.JwtService;
 import lombok.AllArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.file.ReadOnlyFileSystemException;
 
 @Service
 @AllArgsConstructor
@@ -27,8 +27,9 @@ public class AuthService {
     private final FlatRepository flatRepository;
     private final PasswordEncoder passwordEncoder;
     private final RoleRepository roleRepository;
-    private final String DEFAULT_USER = "USER";
-    private final String ADMIN_USER = "ADMIN";
+    private final JwtService jwtService;
+    private static final String DEFAULT_USER = "USER";
+    private static final String ADMIN_USER = "ADMIN";
 
     /**
      * User registration
@@ -97,13 +98,15 @@ public class AuthService {
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
             throw new BadRequestException("Invalid email id or password.");
         }
+        if (!Boolean.TRUE.equals(user.getIsActive()) || Boolean.TRUE.equals(user.getIsLocked())) {
+            throw new BadRequestException("This account is inactive or locked.");
+        }
         boolean isAdmin = user.getRoles().stream()
-                .anyMatch(role -> role.getRoleName().equals(ADMIN_USER));
-        // 3. Return the user data so React can load the dashboard.
-        // We pass a fake "MVP" token so your React app doesn't break if it expects one.
+                .anyMatch(role -> role.getRoleName().equalsIgnoreCase(ADMIN_USER));
+        String token = jwtService.generateToken(new CustomUserDetails(user));
         return new AuthResponse(
                 user.getId(),
-                "mvp-dummy-token-no-auth",
+                token,
                 user.getDisplayName(),
                 user.getEmail(),
                 user.getApartment().getId(),
@@ -111,7 +114,7 @@ public class AuthService {
                 user.getFlat().getId(),
                 user.getFlat().getFlatNumber(),
                 isAdmin,
-                "Login successful (MVP Mode)."
+                "Login successful."
         );
     }
 }
