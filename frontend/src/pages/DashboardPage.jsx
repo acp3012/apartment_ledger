@@ -11,8 +11,8 @@ const DashboardPage = ({
   const navigate = useNavigate();
   const { user } = useAuth();
   const { activePeriod } = usePeriod();
-  const apartmentId = Number(routeApartmentId ?? user?.apartmentId ?? 1);
-  const flatId = Number(routeFlatId ?? user?.flatId ?? 5);
+  const apartmentId = Number(routeApartmentId ?? user?.apartmentId);
+  const flatId = Number(routeFlatId ?? user?.flatId);
 
   // 1. Initialize with null or fallback, then let active-period dictate it
   const [year, setYear] = useState(null);
@@ -29,6 +29,18 @@ const DashboardPage = ({
       try {
         setLoading(true);
         setErrorMessage("");
+
+        if (
+          !Number.isFinite(apartmentId) ||
+          apartmentId <= 0 ||
+          !Number.isFinite(flatId) ||
+          flatId <= 0
+        ) {
+          setErrorMessage(
+            "Your session is missing apartment or flat information. Please log in again.",
+          );
+          return;
+        }
 
         if (!activePeriod) {
           return;
@@ -84,6 +96,18 @@ const DashboardPage = ({
 
   // Step B: Handle manual dropdown changes if the user switches year/month later
   const handlePeriodChange = async (newYear, newMonth) => {
+    if (
+      !Number.isFinite(apartmentId) ||
+      apartmentId <= 0 ||
+      !Number.isFinite(flatId) ||
+      flatId <= 0
+    ) {
+      setErrorMessage(
+        "Your session is missing apartment or flat information. Please log in again.",
+      );
+      return;
+    }
+
     setYear(newYear);
     setMonth(newMonth);
     try {

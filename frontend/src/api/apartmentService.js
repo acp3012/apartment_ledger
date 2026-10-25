@@ -22,7 +22,6 @@ export const apartmentService = {
   },
 
   getApplicableRate: async (apartmentId, flatId, transactionDate) => {
-    // (Your existing code here is perfect)
     const response = await api.get(
       `/apartments/${apartmentId}/maintenance-rates/current`,
       {

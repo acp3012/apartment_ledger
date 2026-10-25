@@ -5,7 +5,6 @@ import CheckerInbox from "../../../pages/CheckerInbox";
 
 const FinanceWorkspace = ({
   apartmentId,
-  makerId,
   transactionType = "income",
   mode = "entry",
 }) => {
@@ -16,15 +15,9 @@ const FinanceWorkspace = ({
   const renderContent = () => {
     if (isEntry) {
       return isIncome ? (
-        <IncomeTab
-          apartmentId={apartmentId}
-          makerId={makerId}
-        />
+        <IncomeTab apartmentId={apartmentId} />
       ) : (
-        <ExpenseMakerForm
-          apartmentId={apartmentId}
-          makerId={makerId}
-        />
+        <ExpenseMakerForm apartmentId={apartmentId} />
       );
     }
 

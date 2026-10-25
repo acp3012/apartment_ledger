@@ -25,9 +25,7 @@ const LoginPage = () => {
 
     try {
       const response = await api.post("/auth/login", formData);
-      const userData = response.data;
-
-      login(userData);
+      login(response.data);
       navigate("/dashboard");
     } catch (err) {
       setError(err.response?.data?.message || "Invalid email or password.");

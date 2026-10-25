@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import { Navigate, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 const MainLayout = () => {
@@ -7,6 +7,13 @@ const MainLayout = () => {
   const location = useLocation();
   const { user, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const isAdmin = Array.isArray(user?.roleNames)
+    ? user.roleNames.some((role) => role === "ADMIN" || role === "ROLE_ADMIN")
+    : user?.isAdmin === true;
+  const isExpenseRoute =
+    location.pathname === "/dashboard/expense" ||
+    location.pathname.startsWith("/dashboard/expense/");
+  const isAdminRoute = location.pathname.startsWith("/admin/");
 
   const handleLogout = () => {
     logout();
@@ -27,6 +34,14 @@ const MainLayout = () => {
     }`;
 
   if (!user) return null;
+  if ((isExpenseRoute || isAdminRoute) && !isAdmin) {
+    return (
+      <Navigate
+        to="/dashboard"
+        replace
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-100 font-sans text-slate-800 flex">
@@ -63,11 +78,28 @@ const MainLayout = () => {
             <span>📊</span> Monthly Report
           </button>
 
-          <button
-            onClick={() => navigate("/dashboard/expense")}
-            className={`w-full text-left ${sidebarItemClass("/dashboard/expense")}`}>
-            <span>💸</span> Ledger Entries
-          </button>
+          {isAdmin && (
+            <>
+              <button
+                onClick={() => navigate("/dashboard/expense")}
+                className={`w-full text-left ${sidebarItemClass("/dashboard/expense")}`}>
+                <span>💸</span> Ledger Entries
+              </button>
+              <p className="px-4 pt-5 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                Administration
+              </p>
+              <button
+                onClick={() => navigate("/admin/master-entries")}
+                className={`w-full text-left ${sidebarItemClass("/admin/master-entries")}`}>
+                <span>⚙️</span> Master Entries
+              </button>
+              <button
+                onClick={() => navigate("/admin/opening-balance")}
+                className={`w-full text-left ${sidebarItemClass("/admin/opening-balance")}`}>
+                <span>＋</span> Opening Balance
+              </button>
+            </>
+          )}
         </div>
 
         {/* Footer info */}
@@ -139,14 +171,37 @@ const MainLayout = () => {
               className="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50">
               Monthly Report
             </button>
-            <button
-              onClick={() => {
-                navigate("/dashboard/expense");
-                setMobileMenuOpen(false);
-              }}
-              className="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50">
-              Ledger Entries
-            </button>
+            {isAdmin && (
+              <>
+                <button
+                  onClick={() => {
+                    navigate("/dashboard/expense");
+                    setMobileMenuOpen(false);
+                  }}
+                  className="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50">
+                  Ledger Entries
+                </button>
+                <p className="px-3 pt-3 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                  Administration
+                </p>
+                <button
+                  onClick={() => {
+                    navigate("/admin/master-entries");
+                    setMobileMenuOpen(false);
+                  }}
+                  className="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50">
+                  Master Entries
+                </button>
+                <button
+                  onClick={() => {
+                    navigate("/admin/opening-balance");
+                    setMobileMenuOpen(false);
+                  }}
+                  className="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50">
+                  Opening Balance
+                </button>
+              </>
+            )}
           </div>
         )}
 

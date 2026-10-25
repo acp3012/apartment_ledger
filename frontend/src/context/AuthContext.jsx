@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useState, useContext, useEffect } from "react";
+import { createContext, useState, useContext } from "react";
 
 const AuthContext = createContext(null);
 
@@ -18,16 +18,26 @@ const normalizeUser = (userData) => {
 };
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    const token = localStorage.getItem("jwt_token");
+    const storedUser = localStorage.getItem("app_user");
 
-  useEffect(() => {
-    localStorage.removeItem("app_user");
-    localStorage.removeItem("jwt_token");
-  }, []);
+    if (!token || !storedUser) return null;
 
-  const login = (userData) => {
+    try {
+      return JSON.parse(storedUser);
+    } catch {
+      return null;
+    }
+  });
+
+  const login = (loginResponse) => {
+    const { token, ...userData } = loginResponse ?? {};
+    if (!token) throw new Error("Login response did not include a token.");
+
     const normalizedUser = normalizeUser(userData);
     setUser(normalizedUser);
+    localStorage.setItem("jwt_token", token);
     localStorage.setItem("app_user", JSON.stringify(normalizedUser));
   };
 

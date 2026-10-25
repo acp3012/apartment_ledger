@@ -4,7 +4,7 @@ import { toast } from "react-toastify";
 import { masterDataService } from "../api/masterDataService";
 import { usePeriod } from "../context/PeriodContext";
 
-const ExpenseMakerForm = ({ apartmentId, makerId }) => {
+const ExpenseMakerForm = ({ apartmentId }) => {
   const { activePeriod } = usePeriod();
   const [categories, setCategories] = useState([]);
   const [paymentModes, setPaymentModes] = useState([]);
@@ -139,7 +139,6 @@ const ExpenseMakerForm = ({ apartmentId, makerId }) => {
         paymentModeId: Number(formData.paymentModeId),
         referenceNumber: formData.referenceNumber,
         remarks: formData.remarks,
-        makerId: makerId,
       };
 
       if (editingDraftId !== null) {

@@ -32,8 +32,8 @@ export const incomeService = {
     );
     return response.data;
   },
-  
-getAllDrafts: async (apartmentId, year, month) => {
+
+  getAllDrafts: async (apartmentId, year, month) => {
     const response = await api.get(
       `/apartments/${apartmentId}/incomes/drafts`,
       {
@@ -45,24 +45,22 @@ getAllDrafts: async (apartmentId, year, month) => {
     );
     return response.data;
   },
-  
-  approveDrafts: async (apartmentId, draftIds, approverId) => {
+
+  approveDrafts: async (apartmentId, draftIds) => {
     const response = await api.post(
       `/apartments/${apartmentId}/incomes/drafts/approve-bulk`,
       {
         draftIds: draftIds,
-        approverId: approverId,
       },
     );
     return response.data;
   },
 
-  rejectDrafts: async (apartmentId, draftIds, approverId, rejectReason) => {
+  rejectDrafts: async (apartmentId, draftIds, rejectReason) => {
     const response = await api.post(
       `/apartments/${apartmentId}/incomes/drafts/reject-bulk`,
       {
         draftIds: draftIds,
-        approverId: approverId,
         comments: rejectReason,
       },
     );

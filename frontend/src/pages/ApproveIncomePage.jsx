@@ -12,13 +12,8 @@ const ApproveIncomePage = ({ apartmentId: routeApartmentId }) => {
   const { activePeriod } = usePeriod();
 
   const apartmentId = Number(
-    routeApartmentId ??
-      routeParamId ??
-      user?.apartmentId ??
-      user?.apartment_id ??
-      0,
+    routeApartmentId ?? routeParamId ?? user?.apartmentId ?? user?.apartment_id,
   );
-  const currentUserId = Number(user?.id ?? user?.userId ?? 0);
 
   // 2. Core State
   const [drafts, setDrafts] = useState([]);
@@ -45,11 +40,6 @@ const ApproveIncomePage = ({ apartmentId: routeApartmentId }) => {
       setErrorMessage(
         "Session is missing the apartment ID. Please log in again.",
       );
-      return false;
-    }
-
-    if (!Number.isFinite(currentUserId) || currentUserId <= 0) {
-      setErrorMessage("Session is missing the user ID. Please log in again.");
       return false;
     }
 
@@ -103,16 +93,7 @@ const ApproveIncomePage = ({ apartmentId: routeApartmentId }) => {
 
     try {
       setActionLoading(true);
-      console.log("Approval payload:", {
-        apartmentId,
-        draftIds: selectedIds,
-        approverId: user.id,
-      });
-      await incomeService.approveDrafts(
-        apartmentId,
-        selectedIds,
-        currentUserId,
-      );
+      await incomeService.approveDrafts(apartmentId, selectedIds);
 
       setDrafts(
         drafts.filter((draft) => !selectedIds.includes(getDraftId(draft))),
@@ -138,18 +119,7 @@ const ApproveIncomePage = ({ apartmentId: routeApartmentId }) => {
 
     try {
       setActionLoading(true);
-      console.log("Rejection payload:", {
-        apartmentId,
-        draftIds: selectedIds,
-        approverId: currentUserId,
-        rejectReason,
-      });
-      await incomeService.rejectDrafts(
-        apartmentId,
-        selectedIds,
-        currentUserId,
-        rejectReason,
-      );
+      await incomeService.rejectDrafts(apartmentId, selectedIds, rejectReason);
 
       setDrafts(
         drafts.filter((draft) => !selectedIds.includes(getDraftId(draft))),

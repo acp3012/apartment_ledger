@@ -36,25 +36,23 @@ export const expenseService = {
   },
 
   // Updated bulk approval matching your curl command
-  approveDrafts: async (apartmentId, draftIds, userId) => {
+  approveDrafts: async (apartmentId, draftIds) => {
     const response = await api.post(
       `/apartments/${apartmentId}/expenses/drafts/approve-bulk`,
       {
-        userId: Number(userId),
         draftIds: draftIds,
-      }
+      },
     );
     return response.data;
   },
 
-rejectDrafts: async (apartmentId, draftIds, userId, rejectReason) => {
+  rejectDrafts: async (apartmentId, draftIds, rejectReason) => {
     const response = await api.post(
       `/apartments/${apartmentId}/expenses/drafts/reject-bulk`,
       {
-        userId: Number(userId),
         draftIds: draftIds,
         rejectReason: rejectReason || "",
-      }
+      },
     );
     return response.data;
   },

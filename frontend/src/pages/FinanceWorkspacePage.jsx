@@ -15,9 +15,8 @@ const FinanceWorkspacePage = ({
   const { user } = useAuth();
 
   const apartmentId = Number(
-    routeParamId ?? user?.apartmentId ?? user?.apartment_id ?? 0,
+    routeParamId ?? user?.apartmentId ?? user?.apartment_id,
   );
-  const makerId = Number(user?.id ?? user?.userId ?? 0);
   const canApprove = user?.isAdmin;
 
   // State for toggles
@@ -25,6 +24,14 @@ const FinanceWorkspacePage = ({
   const [mode, setMode] = useState(defaultMode); // "entry" (maker) or "approval" (checker)
   const isIncome = transactionType === "income";
   const workspaceTitle = `${transactionType === "income" ? "Income" : "Expense"} ${mode === "entry" ? "Entries" : "Approvals"}`;
+
+  if (!Number.isFinite(apartmentId) || apartmentId <= 0) {
+    return (
+      <p className="p-6 text-sm text-rose-700">
+        Your session is missing an apartment ID. Please log in again.
+      </p>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -100,18 +107,12 @@ const FinanceWorkspacePage = ({
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
         {transactionType === "income" ? (
           mode === "entry" ? (
-            <IncomeTab
-              apartmentId={apartmentId}
-              makerId={makerId}
-            />
+            <IncomeTab apartmentId={apartmentId} />
           ) : (
             <ApproveIncomePage apartmentId={apartmentId} />
           )
         ) : mode === "entry" ? (
-          <ExpenseMakerForm
-            apartmentId={apartmentId}
-            makerId={makerId}
-          />
+          <ExpenseMakerForm apartmentId={apartmentId} />
         ) : (
           <CheckerInbox apartmentId={apartmentId} />
         )}

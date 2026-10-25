@@ -12,12 +12,16 @@ const PeriodContext = createContext(null);
 
 export const PeriodProvider = ({ children }) => {
   const { user } = useAuth();
-  const apartmentId = user?.apartmentId || 1;
+  const apartmentId = user?.apartmentId;
 
   const [activePeriod, setActivePeriod] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   const fetchActivePeriod = useCallback(async () => {
+    if (!Number.isFinite(Number(apartmentId)) || Number(apartmentId) <= 0) {
+      return;
+    }
+
     try {
       setLoading(true);
       const data = await ledgerService.getActiveLedgerPeriod(apartmentId);

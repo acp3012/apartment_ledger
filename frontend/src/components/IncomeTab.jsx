@@ -5,7 +5,7 @@ import { incomeService } from "../api/incomeService";
 import { usePeriod } from "../context/PeriodContext";
 import { toast } from "react-toastify";
 
-const IncomeTab = ({ apartmentId, makerId }) => {
+const IncomeTab = ({ apartmentId }) => {
   const { activePeriod } = usePeriod();
   const [isOtherIncome, setIsOtherIncome] = useState(false);
   const isMaintenance = !isOtherIncome;
@@ -159,7 +159,6 @@ const IncomeTab = ({ apartmentId, makerId }) => {
       paymentModeId: formData.paymentModeId,
       referenceNumber: formData.referenceNumber,
       remarks: formData.remarks,
-      makerId: makerId,
     };
 
     try {

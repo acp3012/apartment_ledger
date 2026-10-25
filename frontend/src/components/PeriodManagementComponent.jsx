@@ -7,7 +7,7 @@ import ConfirmationModal from "./ConfirmationModal";
 const PeriodManagementComponent = () => {
   const { activePeriod, refreshPeriod } = usePeriod();
   const { user } = useAuth();
-  const apartmentId = user?.apartmentId || 1;
+  const apartmentId = user?.apartmentId;
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -15,6 +15,8 @@ const PeriodManagementComponent = () => {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
   const handleClosePeriod = async () => {
+    if (!apartmentId || !activePeriod) return;
+
     try {
       setLoading(true);
       setMessage("");

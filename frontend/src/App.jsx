@@ -6,6 +6,8 @@ import DashboardPage from "./pages/DashboardPage";
 import FinanceWorkspacePage from "./pages/FinanceWorkspacePage";
 import IncomePage from "./pages/IncomePage";
 import MonthlyStatementPage from "./pages/MonthlyStatementPage";
+import MasterEntriesPage from "./pages/MasterEntriesPage";
+import OpeningBalancePage from "./pages/OpeningBalancePage";
 import { useAuth } from "./context/AuthContext";
 
 const RootRoute = () => {
@@ -83,6 +85,14 @@ function App() {
           <Route
             path="/monthly-statement"
             element={<MonthlyStatementPage />}
+          />
+          <Route
+            path="/admin/master-entries"
+            element={<MasterEntriesPage />}
+          />
+          <Route
+            path="/admin/opening-balance"
+            element={<OpeningBalancePage />}
           />
         </Route>
       </Routes>

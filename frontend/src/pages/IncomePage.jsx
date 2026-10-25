@@ -10,8 +10,16 @@ const IncomePage = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const apartmentId = Number(routeParamId ?? user?.apartmentId ?? 0);
+  const apartmentId = Number(routeParamId ?? user?.apartmentId);
   const isApprovalView = location.pathname.includes("approve");
+
+  if (!Number.isFinite(apartmentId) || apartmentId <= 0) {
+    return (
+      <p className="p-6 text-sm text-rose-700">
+        Your session is missing an apartment ID. Please log in again.
+      </p>
+    );
+  }
 
   return (
     <div>
@@ -58,10 +66,7 @@ const IncomePage = () => {
         {isApprovalView ? (
           <ApproveIncomePage apartmentId={apartmentId} />
         ) : (
-          <IncomeTab
-            apartmentId={apartmentId}
-            makerId={user?.id ?? user?.userId}
-          />
+          <IncomeTab apartmentId={apartmentId} />
         )}
       </div>
     </div>

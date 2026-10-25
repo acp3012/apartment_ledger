@@ -8,8 +8,8 @@ import ConfirmationModal from "../components/ConfirmationModal";
 const CheckerInbox = ({ apartmentId: routeApartmentId }) => {
   const { user } = useAuth();
   const { activePeriod } = usePeriod();
-  const apartmentId = Number(routeApartmentId ?? user?.apartmentId ?? 1);
-  const currentUserId = Number(user?.id ?? user?.userId ?? 0);
+  const apartmentId = Number(routeApartmentId ?? user?.apartmentId);
+  const hasValidApartmentId = Number.isFinite(apartmentId) && apartmentId > 0;
 
   const [drafts, setDrafts] = useState([]);
   const [selectedIds, setSelectedIds] = useState([]);
@@ -27,6 +27,13 @@ const CheckerInbox = ({ apartmentId: routeApartmentId }) => {
   const [rejectReason, setRejectReason] = useState("");
 
   const handleLoadPending = async () => {
+    if (!hasValidApartmentId) {
+      setErrorMessage(
+        "Your session is missing an apartment ID. Please log in again.",
+      );
+      return;
+    }
+
     try {
       setLoading(true);
       setErrorMessage("");
@@ -52,15 +59,11 @@ const CheckerInbox = ({ apartmentId: routeApartmentId }) => {
 
   // Bulk Approval Handler
   const handleApprove = async () => {
-    if (selectedIds.length === 0) return;
+    if (selectedIds.length === 0 || !hasValidApartmentId) return;
 
     try {
       setActionLoading(true);
-      await expenseService.approveDrafts(
-        apartmentId,
-        selectedIds,
-        currentUserId,
-      );
+      await expenseService.approveDrafts(apartmentId, selectedIds);
 
       setDrafts(
         drafts.filter((draft) => !selectedIds.includes(getDraftId(draft))),
@@ -82,7 +85,7 @@ const CheckerInbox = ({ apartmentId: routeApartmentId }) => {
 
   // Bulk Rejection Handler (passes optional/required reason)
   const handleReject = async () => {
-    if (selectedIds.length === 0) return;
+    if (selectedIds.length === 0 || !hasValidApartmentId) return;
 
     try {
       setActionLoading(true);
@@ -90,7 +93,6 @@ const CheckerInbox = ({ apartmentId: routeApartmentId }) => {
       await expenseService.rejectDrafts(
         apartmentId,
         selectedIds,
-        currentUserId,
         rejectReason,
       );
 

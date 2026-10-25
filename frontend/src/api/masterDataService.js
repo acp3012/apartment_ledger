@@ -5,28 +5,34 @@ let incomeCategoriesCache = null;
 
 export const masterDataService = {
   getExpenseCategories: async () => {
-    if(!expenseCategoriesCache){
-	    const response = await api.get("/master/ledger-categories/DR");
-    	expenseCategoriesCache = response.data;
+    if (
+      !Array.isArray(expenseCategoriesCache) ||
+      expenseCategoriesCache.length === 0
+    ) {
+      const response = await api.get("/master/ledger-categories/DR");
+      expenseCategoriesCache = Array.isArray(response.data)
+        ? response.data
+        : [];
     }
     return expenseCategoriesCache;
   },
-  
+
   getIncomeCategories: async () => {
-    if(!incomeCategoriesCache) {
-      
-    const response = await api.get("/master/ledger-categories/CR");
-    incomeCategoriesCache = response.data;
+    if (
+      !Array.isArray(incomeCategoriesCache) ||
+      incomeCategoriesCache.length === 0
+    ) {
+      const response = await api.get("/master/ledger-categories/CR");
+      incomeCategoriesCache = Array.isArray(response.data) ? response.data : [];
     }
     return incomeCategoriesCache;
   },
 
   getPaymentModes: async () => {
-    if(!paymentModeCache) {
-    	const response = await api.get("/master/payment-modes");
-    	paymentModeCache = response.data;
+    if (!Array.isArray(paymentModeCache) || paymentModeCache.length === 0) {
+      const response = await api.get("/master/payment-modes");
+      paymentModeCache = Array.isArray(response.data) ? response.data : [];
     }
     return paymentModeCache;
   },
- 
 };
