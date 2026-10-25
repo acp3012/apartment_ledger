@@ -53,7 +53,7 @@ public class ApartmentController {
     // create apartment
     @Operation(summary = "Create an apartment",
             description = "Creates an apartment with the supplied details. New apartments are active by default.")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     @PostMapping
     public ResponseEntity<ApartmentResponse> createApartment(
             @Valid @RequestBody ApartmentCreateRequest request) {
@@ -68,7 +68,8 @@ public class ApartmentController {
     // update active status of apartment
     @Operation(summary = "Enable or disable an apartment",
             description = "Updates only the apartment's active status; other apartment details remain unchanged.")
-    @PreAuthorize("hasRole('ADMIN')")
+    
+    @PreAuthorize("hasRole('ADMIN') and @apartmentAuthorization.canAccess(#p0)")
     @PutMapping("/{apartmentId}")
     public ResponseEntity<ApartmentResponse> updateActiveStatus(
             @Parameter(description = "ID of the apartment.") @PathVariable Long apartmentId,

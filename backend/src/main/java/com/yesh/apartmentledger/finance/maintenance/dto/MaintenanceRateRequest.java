@@ -1,7 +1,6 @@
 package com.yesh.apartmentledger.finance.maintenance.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.yesh.apartmentledger.core.user.entity.AppUser;
 
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.DecimalMin;
@@ -21,10 +20,7 @@ public record MaintenanceRateRequest(
 
         @NotNull(message = "Fee is required")
         @DecimalMin(value = "0.00", inclusive = false, message = "Fee must be greater than zero")
-        BigDecimal fee,
-
-        @NotNull(message = "Created by user is required")
-        Long createdBy
+        BigDecimal fee
 ) {
     @JsonIgnore
     @AssertTrue(message = "Effective from date must be on or before effective to date")

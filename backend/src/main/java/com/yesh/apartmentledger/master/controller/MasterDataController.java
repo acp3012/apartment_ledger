@@ -1,10 +1,9 @@
 package com.yesh.apartmentledger.master.controller;
 import com.yesh.apartmentledger.master.ledgercategory.dto.LedgerCategoryResponse;
 import com.yesh.apartmentledger.master.ledgercategory.entity.LedgerCategory;
-import com.yesh.apartmentledger.master.ledgercategory.repository.LedgerCategoryRepository;
+import com.yesh.apartmentledger.master.cache.LookupCacheService;
 import com.yesh.apartmentledger.master.paymentmode.dto.PaymentModeResponse;
 import com.yesh.apartmentledger.master.paymentmode.entity.PaymentMode;
-import com.yesh.apartmentledger.master.paymentmode.repository.PaymentModeRepository;
 import com.yesh.apartmentledger.master.paymentmode.service.PaymentModeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,8 +17,7 @@ import java.util.List;
 public class MasterDataController {
 
     private final PaymentModeService paymentModeService;
-    private final LedgerCategoryRepository ledgerCategoryRepository;
-    private final PaymentModeRepository paymentModeRepository;
+        private final LookupCacheService lookupCacheService;
 
     //-------------------------------------------
     // Payment Mode
@@ -27,8 +25,7 @@ public class MasterDataController {
     @GetMapping("/payment-modes")
     public List<PaymentModeResponse> getPaymentModes() {
 
-        List<PaymentMode> paymentModes = paymentModeRepository
-                .findByIsActiveTrueOrderByDisplayOrderAsc();
+        List<PaymentMode> paymentModes = paymentModeService.getAllActivePaymentModes();
 
         return paymentModes.stream()
                 .map(mode -> new PaymentModeResponse(
@@ -50,15 +47,16 @@ public class MasterDataController {
     //-------------------------------------------
     @GetMapping("/ledger-categories")
     public List<LedgerCategoryResponse> getAllLedgerCategories() {
-        List<LedgerCategory> ledgerCategories = ledgerCategoryRepository
-                .findAll();
+        List<LedgerCategory> ledgerCategories = lookupCacheService.getLedgerCategories();
         return toLedgerCategoryResponse(ledgerCategories);
 
     }
 
     @GetMapping("/ledger-categories/{transactionType}")
     public List<LedgerCategoryResponse> getLedgerCategoriesByTransactionType(@PathVariable String transactionType) {
-        List<LedgerCategory> ledgerCategories = ledgerCategoryRepository.findByTransactionTypeIgnoreCase(transactionType);
+        List<LedgerCategory> ledgerCategories = lookupCacheService.getLedgerCategories().stream()
+                .filter(category -> category.getTransactionType().equalsIgnoreCase(transactionType))
+                .toList();
         return toLedgerCategoryResponse(ledgerCategories);
 
     }

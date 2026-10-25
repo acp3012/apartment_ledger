@@ -16,14 +16,13 @@ public class ApartmentAuthorization {
             return false;
         }
 
-        if (authentication.getAuthorities().stream()
-                .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"))) {
-            return true;
-        }
+        boolean hasApartmentRole = authentication.getAuthorities().stream()
+            .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN")
+                || authority.getAuthority().equals("ROLE_USER"));
 
-        return authentication.getPrincipal() instanceof CustomUserDetails userDetails
-                && userDetails.getAuthorities().stream()
-                .anyMatch(authority -> authority.getAuthority().equals("ROLE_USER"))
-                && Objects.equals(userDetails.getApartmentId(), requestedApartmentId);
+        // respective user should have the same apartmentId as the requested apartmentId
+        return hasApartmentRole
+            && authentication.getPrincipal() instanceof CustomUserDetails userDetails
+            && Objects.equals(userDetails.getApartmentId(), requestedApartmentId);
     }
 }

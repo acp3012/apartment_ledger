@@ -41,7 +41,10 @@ public class LedgerService {
     public LedgerPeriodResponse getActiveLedgerPeriod(Long apartmentId){
         var ledgerPeriod = ledgerPeriodRepository.findById(apartmentId)
                 .orElseThrow(()-> new ResourceNotFoundException("Apartment id not found"));
-        return new LedgerPeriodResponse(apartmentId, ledgerPeriod.getActiveYear(), ledgerPeriod.getActiveMonth(),ledgerPeriod.getMonthName());
+        return new LedgerPeriodResponse(apartmentId,
+                ledgerPeriod.getActiveYear(),
+                ledgerPeriod.getActiveMonth(),
+                ledgerPeriod.getMonthName());
     }
 
     // Get Ledger summary Previous month Opening Balance, current month income & expense.
@@ -69,8 +72,6 @@ public class LedgerService {
 
         BigDecimal closingBalance = openingBalance.add(totalIncome).subtract(totalExpense);
 
-
-
         return new LedgerSummaryResponse(
                 apartmentId,
                 year,
@@ -79,28 +80,27 @@ public class LedgerService {
                 totalIncome,
                 totalExpense,
                 closingBalance);
-
     }
-        // ==========================================
-        // 1. PREVIEW THE MONTH (Calculate dynamically)
-        // ==========================================
-        @Transactional(readOnly = true)
-        public MonthEndCloseResponse previewMonthEndClose (Long apartmentId, Short year, Short month){
+    // ==========================================
+    // 1. PREVIEW THE MONTH (Calculate dynamically)
+    // ==========================================
+    @Transactional(readOnly = true)
+    public MonthEndCloseResponse previewMonthEndClose (Long apartmentId, Short year, Short month){
 
-            // Check if already closed
-            Optional<MonthlyLedger> existingLedger = monthlyLedgerRepository
-                    .findByApartmentIdAndYearAndMonth(apartmentId, year, month);
-            if (existingLedger.isPresent()) {
-                MonthlyLedger ledger = existingLedger.get();
-                return new MonthEndCloseResponse(
-                        apartmentId, year, month,
-                        ledger.getOpeningBalance(),
-                        ledger.getIncome(),
-                        ledger.getExpense(),
-                        ledger.getClosingBalance(),
-                        true // Tells UI to disable the "Submit" button
-                );
-            }
+        // Check if already closed
+        Optional<MonthlyLedger> existingLedger = monthlyLedgerRepository
+                .findByApartmentIdAndYearAndMonth(apartmentId, year, month);
+        if (existingLedger.isPresent()) {
+            MonthlyLedger ledger = existingLedger.get();
+            return new MonthEndCloseResponse(
+                    apartmentId, year, month,
+                    ledger.getOpeningBalance(),
+                    ledger.getIncome(),
+                    ledger.getExpense(),
+                    ledger.getClosingBalance(),
+                    true // Tells UI to disable the "Submit" button
+            );
+        }
 
             // Calculate Previous Month/Year to get Opening Balance
             Short prevMonth = (short) YearMonth.of(year, month).plusMonths(1).getMonthValue();
@@ -122,74 +122,74 @@ public class LedgerService {
             return new MonthEndCloseResponse(
                     apartmentId, year, month, openingBalance, totalIncome, totalExpense, computedClosingBalance, false
             );
+     }
+
+    // ==========================================
+    // 2. COMMIT THE MONTH (Lock the Vault)
+    // ==========================================
+    @Transactional
+    public String closeActiveAccountPeriod(Long apartmentId, Short year, Short month){
+        // 1. Check ledger_period for current active month & year
+        var period =  getActiveLedgerPeriod(apartmentId);
+
+         if (!period.apartmentId().equals(apartmentId)
+                 || !period.year().equals(year)
+                 || !period.month().equals(month)
+         ){
+             throw new BadRequestException("Invalid year and month.");
+         }
+
+        // Prevent duplicate closure
+        if (monthlyLedgerRepository.findByApartmentIdAndYearAndMonth(apartmentId, year, month).isPresent()) {
+            throw new BadRequestException("This month is already closed and cannot be modified.");
+        }
+        // Check if any Pending drafts
+        var hasPendingExpense = (long) expenseDraftRepository
+                .findByApartmentIdAndApprovalStatus_StatusName(apartmentId, ApprovalStatusEnum.PENDING.name())
+                .stream().toList().size() > 0;
+        if(hasPendingExpense){
+            throw new BadRequestException("One or more Pending expense draft found.");
         }
 
-        // ==========================================
-        // 2. COMMIT THE MONTH (Lock the Vault)
-        // ==========================================
-        @Transactional
-        public String closeActiveAccountPeriod(Long apartmentId, Short year, Short month){
-            // 1. Check ledger_period for current active month & year
-            var period =  getActiveLedgerPeriod(apartmentId);
+        var hasPendingIncome = (long) incomeDraftRepository
+                .findByApartment_IdAndApprovalStatus_StatusNameAndTxnYearAndTxnMonth(apartmentId, ApprovalStatusEnum.PENDING.name(), year, month)
+                .stream().toList().size() >0;
 
-             if (!period.apartmentId().equals(apartmentId)
-                     || !period.year().equals(year)
-                     || !period.month().equals(month)
-             ){
-                 throw new BadRequestException("Invalid year and month.");
-             }
-
-            // Prevent duplicate closure
-            if (monthlyLedgerRepository.findByApartmentIdAndYearAndMonth(apartmentId, year, month).isPresent()) {
-                throw new BadRequestException("This month is already closed and cannot be modified.");
-            }
-            // Check if any Pending drafts
-            var hasPendingExpense = (long) expenseDraftRepository
-                    .findByApartmentIdAndApprovalStatus_StatusName(apartmentId, ApprovalStatusEnum.PENDING.name())
-                    .stream().toList().size() > 0;
-            if(hasPendingExpense){
-                throw new BadRequestException("One or more Pending expense draft found.");
-            }
-
-            var hasPendingIncome = (long) incomeDraftRepository
-                    .findByApartment_IdAndApprovalStatus_StatusNameAndTxnYearAndTxnMonth(apartmentId, ApprovalStatusEnum.PENDING.name(), year, month)
-                    .stream().toList().size() >0;
-
-            if(hasPendingIncome) {
-                throw new BadRequestException("One or more Pending expense draft entry available.");
-            }
-
-            Apartment apartment = apartmentRepository.findById(apartmentId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Apartment not found"));
-
-            var ledgerSummary = getLedgerSummary(apartmentId,year,month);
-
-            MonthlyLedger ledger = new MonthlyLedger();
-
-            ledger.setApartment(apartment);
-            ledger.setYear(year);
-            ledger.setMonth(month);
-            ledger.setOpeningBalance(ledgerSummary.openingBalance());
-            ledger.setIncome(ledgerSummary.totalIncome());
-            ledger.setExpense(ledgerSummary.totalExpense());
-
-            // Update Active period
-            var currentPeriod = ledgerPeriodRepository.findById(apartmentId)
-                    .orElseThrow(()-> new ResourceNotFoundException("Active ledger period not found for given apartment."));
-
-            var nextYearMonth = YearMonth.of(currentPeriod.getActiveYear(), currentPeriod.getActiveMonth()).plusMonths(1);
-
-            currentPeriod.setActiveYear((short)nextYearMonth.getYear());
-            currentPeriod.setActiveMonth((short)nextYearMonth.getMonthValue() );
-            currentPeriod.setUpdatedDate(LocalDateTime.now());
-
-            // We do NOT set closingBalance, the database does it!
-
-            monthlyLedgerRepository.save(ledger);
-            ledgerPeriodRepository.save(currentPeriod);
-
-            return "Successfully closed ledger for " + month + "/" + year;
+        if(hasPendingIncome) {
+            throw new BadRequestException("One or more Pending expense draft entry available.");
         }
+
+        Apartment apartment = apartmentRepository.findById(apartmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Apartment not found"));
+
+        var ledgerSummary = getLedgerSummary(apartmentId,year,month);
+
+        MonthlyLedger ledger = new MonthlyLedger();
+
+        ledger.setApartment(apartment);
+        ledger.setYear(year);
+        ledger.setMonth(month);
+        ledger.setOpeningBalance(ledgerSummary.openingBalance());
+        ledger.setIncome(ledgerSummary.totalIncome());
+        ledger.setExpense(ledgerSummary.totalExpense());
+
+        // Update Active period
+        var currentPeriod = ledgerPeriodRepository.findById(apartmentId)
+                .orElseThrow(()-> new ResourceNotFoundException("Active ledger period not found for given apartment."));
+
+        var nextYearMonth = YearMonth.of(currentPeriod.getActiveYear(), currentPeriod.getActiveMonth()).plusMonths(1);
+
+        currentPeriod.setActiveYear((short)nextYearMonth.getYear());
+        currentPeriod.setActiveMonth((short)nextYearMonth.getMonthValue() );
+        currentPeriod.setUpdatedDate(LocalDateTime.now());
+
+        // We do NOT set closingBalance, the database does it!
+
+        monthlyLedgerRepository.save(ledger);
+        ledgerPeriodRepository.save(currentPeriod);
+
+        return "Successfully closed ledger for " + month + "/" + year;
+    }
 
     // GET opening balance
     private BigDecimal getOpeningBalance(Long apartmentId,Short year, Short month){
@@ -212,9 +212,10 @@ public class LedgerService {
         var apartment = apartmentRepository.findById(apartmentId).orElseThrow(()-> new ResourceNotFoundException("Apartment id not found"));
         var openingYearMonth = YearMonth.of(apartment.getGoLiveYear(), apartment.getGoLiveMonth());
         var requestYearMonth = YearMonth.of(request.year(), request.month());
-
-        if (requestYearMonth.isBefore(openingYearMonth)) {
-            throw new BadRequestException("Ledger manual creation must be period period to apartment go live period.");
+        
+        // Throws an error if the requested period is equal to or ahead of the go-live period
+        if (!requestYearMonth.isBefore(openingYearMonth)) {
+            throw new BadRequestException("Ledger manual creation period must be prior to or equal to the apartment go live period.");
         }
 
         var hasLedger = monthlyLedgerRepository.existsByApartmentIdAndYearAndMonth(apartmentId, request.year(),request.month());

@@ -2,6 +2,8 @@ package com.yesh.apartmentledger.config;
 
 import com.yesh.apartmentledger.security.filter.JwtAuthenticationFilter;
 import jakarta.servlet.http.HttpServletResponse;
+
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,6 +21,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.servlet.HandlerExceptionResolver;
 
 import java.util.List;
 
@@ -39,8 +42,12 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, Environment environment) throws Exception {
-        String[] swaggerPaths = environment.acceptsProfiles(Profiles.of("dev"))
+    public SecurityFilterChain securityFilterChain(
+        HttpSecurity http,
+        Environment environment,
+        @Qualifier("handlerExceptionResolver") HandlerExceptionResolver exceptionResolver) throws Exception {
+        
+            String[] swaggerPaths = environment.acceptsProfiles(Profiles.of("dev"))
                 ? new String[] { "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/webjars/**" }
                 : new String[] {};
 
@@ -48,8 +55,11 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(
-                    (request, response, exception) -> response.sendError(HttpServletResponse.SC_UNAUTHORIZED)))
+               .exceptionHandling(exceptions -> exceptions
+                .authenticationEntryPoint((request, response, exception) ->
+                    exceptionResolver.resolveException(request, response, null, exception))
+                .accessDeniedHandler((request, response, exception) ->
+                    exceptionResolver.resolveException(request, response, null, exception)))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/v1/auth/**").permitAll()
@@ -84,4 +94,5 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
+    
 }

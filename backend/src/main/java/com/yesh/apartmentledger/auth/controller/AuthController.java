@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,12 +25,13 @@ public class AuthController {
 
     @PostMapping("/register")
     @Operation(summary = "Register a first time user", description = "First time user creation with credentials")
-    public ResponseEntity<AuthResponse> register(
+    public ResponseEntity register(
             @Parameter(description = "Request payload for registration.")
             @Valid @RequestBody
             RegisterRequest request
     ) {
-        return ResponseEntity.ok(authService.register(request));
+        authService.register(request);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @PostMapping("/login")

@@ -27,7 +27,8 @@ public class  MaintenanceRateController {
 
 
     @GetMapping("/current")
-    public ResponseEntity<MaintenanceRateResponse> getApplicableRate(
+    @Operation(summary = "Fetch maintenance fee for a apartment and or flatid for a given period.")
+    public ResponseEntity<MaintenanceRateResponse> getMaintenanceRatet(
             @PathVariable Long apartmentId,
             @RequestParam Long flatId,
             @RequestParam LocalDate date) {
@@ -35,16 +36,16 @@ public class  MaintenanceRateController {
     }
 
     @PostMapping()
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') and @apartmentAuthorization.canAccess(#p0)")
     @Operation (summary = "Create a new maintenance fee for an apartment. If flatId is provided, it will be a flat-specific rate; otherwise, it will be an apartment-wide rate.")
-    public ResponseEntity<MaintenanceRateResponse> createMaintenanceFee(
+    public ResponseEntity<MaintenanceRateResponse> createMaintenanceRate(
             @PathVariable Long apartmentId,
             @RequestBody MaintenanceRateRequest request) {
         return ResponseEntity.created(null).body(rateService.createMaintenanceFee(apartmentId, null, request));
     }
 
     @PostMapping("/flats/{flatId}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') and @apartmentAuthorization.canAccess(#p0)")
     @Operation (summary = "Create a new maintenance fee for a specific flat within an apartment. If flatId is provided, it will be a flat-specific rate; otherwise, it will be an apartment-wide rate.")
     public ResponseEntity<MaintenanceRateResponse> createMaintenanceFee(
             @PathVariable Long apartmentId,

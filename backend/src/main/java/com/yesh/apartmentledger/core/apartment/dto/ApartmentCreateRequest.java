@@ -1,5 +1,6 @@
 package com.yesh.apartmentledger.core.apartment.dto;
 
+import com.yesh.apartmentledger.core.validation.ValidMonth;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -17,6 +18,6 @@ public record ApartmentCreateRequest(
         @Size(max = 20) String ifscCode,
         @Min (2000) @Max(2100)
         Short goLiveYear,
-        @Min(1) @Max(12) Short goLiveMonth
+        @ValidMonth Short goLiveMonth
 ) {
 }

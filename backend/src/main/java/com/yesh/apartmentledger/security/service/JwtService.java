@@ -5,6 +5,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
@@ -31,7 +32,7 @@ public class JwtService {
         claims.put("apartmentId", userDetails.getApartmentId());
         claims.put("flatId", userDetails.getFlatId());
         claims.put("roles", userDetails.getAuthorities().stream()
-            .map(authority -> authority.getAuthority())
+            .map(GrantedAuthority::getAuthority)
             .toList());
 
         return Jwts.builder()

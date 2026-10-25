@@ -13,7 +13,7 @@ import java.time.LocalDate;
 @Entity
 @Immutable       // view
 @Getter
-@Table(name="v_income_expense", schema = "finance")
+@Table(name="v_income_expense", schema = "report")
 public class LedgerDetail {
     @Id
     @Column(name="transaction_id", nullable = false)

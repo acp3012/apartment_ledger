@@ -1,7 +1,6 @@
 package com.yesh.apartmentledger.finance.income.dto;
 
-import com.yesh.apartmentledger.master.ledgercategory.entity.LedgerCategory;
-import jakarta.persistence.Column;
+import com.yesh.apartmentledger.core.validation.ValidMonth;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
@@ -20,7 +19,7 @@ public record IncomeDraftRequest(
         @NotNull(message = "Transaction date is required")
         LocalDate transactionDate,
 
-        Short txnMonth,
+        @ValidMonth Short txnMonth,
 
         Short txnYear ,
         @NotNull(message = "Amount is required")
@@ -34,8 +33,6 @@ public record IncomeDraftRequest(
         String referenceNumber,
 
         @Size(max = 500, message = "Remarks cannot exceed 500 characters")
-        String remarks,
-        @NotNull(message = "The user id cannot be null")
-        Long makerId
+        String remarks
 
 ) {}

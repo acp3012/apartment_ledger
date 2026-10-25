@@ -8,6 +8,7 @@ import com.yesh.apartmentledger.finance.income.dto.IncomeResponse;
 import com.yesh.apartmentledger.finance.income.dto.PaymentModeIncomeSummary;
 import com.yesh.apartmentledger.finance.income.entity.Income;
 import com.yesh.apartmentledger.finance.income.repository.IncomeRepository;
+import com.yesh.apartmentledger.security.service.CurrentUserService;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +21,7 @@ public class IncomeService {
 
     private final IncomeRepository incomeRepository;
     private final FlatRepository flatRepository;
+    private final CurrentUserService currentUserService;
 
     /**
      * Fetch all amount received (income) for a specific period.
@@ -29,6 +31,7 @@ public class IncomeService {
      * @return IncomeResponse
      */
     public List<IncomeResponse> getIncomeByApartmentYearAndMonth(Long apartmentId, Short year, Short month){
+        currentUserService.requireApartmentAccess(apartmentId);
         var incomes =  incomeRepository.findByApartmentYearMonth(apartmentId,year,month);
 
         return incomes.stream().map(this::toResponse).toList();
@@ -43,11 +46,14 @@ public class IncomeService {
      * @return FlatPaymentStatusResponse
      */
     public FlatPaymentStatusResponse getFlatMaintenancePaymentStatus(Long apartmentId, Long flatId, Short year, Short month){
+        currentUserService.requireApartmentAccess(apartmentId);
         var incomes =  incomeRepository.findByApartmentYearMonth(apartmentId,year,month);
         var status = PaymentStatusEnum.DUE.name();
 
-        var flat = flatRepository.findById(flatId).orElseThrow( ()-> new ResourceNotFoundException("Flat not found"));
-        var flatIncome = incomes.stream().filter(i-> i.getFlat().getId().equals(flatId)
+        var flat = flatRepository.findByIdAndApartmentId(flatId, apartmentId)
+            .orElseThrow(() -> new ResourceNotFoundException("Flat not found"));
+        var flatIncome = incomes.stream().filter(i -> i.getFlat() != null
+                && i.getFlat().getId().equals(flatId)
                         && i.getLedgerCategory().getIsFlatMaintenance().equals(true))
                 .findFirst().orElse(null);
 
@@ -72,7 +78,8 @@ public class IncomeService {
      * @return Payment mode wise income amount summary
      */
     public List<PaymentModeIncomeSummary> getIncomeSummaryByPaymentMode(Long apartmentId, Short year, Short month){
-            return incomeRepository.sumIncomeByPaymentMode(apartmentId,year,month);
+        currentUserService.requireApartmentAccess(apartmentId);
+        return incomeRepository.sumIncomeByPaymentMode(apartmentId,year,month);
 
     }
 

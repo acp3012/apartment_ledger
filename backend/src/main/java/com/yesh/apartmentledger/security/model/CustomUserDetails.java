@@ -10,9 +10,8 @@ import java.util.Collection;
 import java.util.Locale;
 
 @Getter
-
 public class CustomUserDetails implements UserDetails {
-
+    private final Long userId;
     private final String username; // We will use mobileNumber as the principal
     private final String password;
     private final Long apartmentId;
@@ -22,6 +21,7 @@ public class CustomUserDetails implements UserDetails {
     private final Collection<? extends GrantedAuthority> authorities;
 
     public CustomUserDetails(AppUser appUser) {
+        this.userId = appUser.getId();
         this.username = appUser.getEmail();
         this.password = appUser.getPasswordHash();
         this.apartmentId = appUser.getApartment().getId();

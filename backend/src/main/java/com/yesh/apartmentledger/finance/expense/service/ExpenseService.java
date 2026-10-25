@@ -1,10 +1,10 @@
 package com.yesh.apartmentledger.finance.expense.service;
 
+import com.yesh.apartmentledger.core.validation.MonthRangeValidator;
 import com.yesh.apartmentledger.core.apartment.entity.Apartment;
 import com.yesh.apartmentledger.core.apartment.repository.ApartmentRepository;
 import com.yesh.apartmentledger.core.enums.ApprovalStatusEnum;
 import com.yesh.apartmentledger.core.user.entity.AppUser;
-import com.yesh.apartmentledger.core.user.repository.AppUserRepository;
 import com.yesh.apartmentledger.core.validation.LedgerValidationUtil;
 import com.yesh.apartmentledger.core.validation.MasterEntityValidator;
 import com.yesh.apartmentledger.exception.BadRequestException;
@@ -14,16 +14,14 @@ import com.yesh.apartmentledger.finance.expense.entity.Expense;
 import com.yesh.apartmentledger.finance.expense.entity.ExpenseDraft;
 import com.yesh.apartmentledger.finance.expense.repository.ExpenseDraftRepository;
 import com.yesh.apartmentledger.finance.expense.repository.ExpenseRepository;
-import com.yesh.apartmentledger.finance.income.dto.PaymentModeIncomeSummary;
 import com.yesh.apartmentledger.master.approvalstatus.entity.ApprovalStatus;
 import com.yesh.apartmentledger.master.approvalstatus.repository.ApprovalStatusRepository;
 import com.yesh.apartmentledger.master.cache.LookupCacheService;
-import com.yesh.apartmentledger.master.ledgercategory.entity.LedgerCategory;
 import com.yesh.apartmentledger.master.ledgercategory.repository.LedgerCategoryRepository;
+import com.yesh.apartmentledger.master.paymentmode.repository.PaymentModeRepository;
+import com.yesh.apartmentledger.security.service.CurrentUserService;
 import lombok.AllArgsConstructor;
-import org.jboss.logging.Logger;
 import org.jspecify.annotations.NonNull;
-import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,34 +38,38 @@ public class ExpenseService {
     private final ApartmentRepository apartmentRepository;
     private final LedgerValidationUtil ledgerValidationUtil;
     private final MasterEntityValidator entityValidator;
-    private final AppUserRepository appUserRepository;
+    private final CurrentUserService currentUserService;
     private final ApprovalStatusRepository approvalStatusRepository;
     private final LedgerCategoryRepository ledgerCategoryRepository;
     private final LookupCacheService lookupCacheService;
-    private final String DEBIT_CODE = "DR";
+    private final PaymentModeRepository paymentModeRepository;
+    private static final String DEBIT_CODE = "DR";
 
     // ==========================================
     // MAKER: SUBMIT NEW EXPENSE DRAFTS
     // ==========================================
     @Transactional
     public void createExpenseDraft(Long apartmentId, ExpenseDraftRequest request) {
+        currentUserService.requireApartmentAccess(apartmentId);
+        AppUser maker = currentUserService.getCurrentUser();
         Apartment apartment = apartmentRepository.findById(apartmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Apartment not found"));
         // IMPORTANT Do not allow out of cycle date.
         ledgerValidationUtil.validateBillingPeriod(apartment,request.transactionDate());
-        ApprovalStatus pendingStatus =  lookupCacheService.getApprovalStatusById(ApprovalStatusEnum.PENDING.getValue());
+        ApprovalStatus cachedPendingStatus = lookupCacheService.getApprovalStatusByName(ApprovalStatusEnum.PENDING.name());
+        if (cachedPendingStatus == null) {
+            throw new ResourceNotFoundException("Default approval status not found");
+        }
+        ApprovalStatus pendingStatus = approvalStatusRepository.getReferenceById(cachedPendingStatus.getId());
 
-        List<ExpenseDraft> drafts = new ArrayList<>();
-
-        var result = entityValidator.validateAndGetEntities(apartmentId,
+        var result = entityValidator.validateAndGetEntities(
                 request.ledgerCategoryId(),
-                request.paymentModeId(),
-                request.makerId()
+            request.paymentModeId()
                 );
 
        entityValidator.throwErrorIfLedgerCategoryCodeNotMatch(result.ledgerCategory().getTransactionType(),DEBIT_CODE);
 
-        ExpenseDraft draft = createExpenseDraft(request, apartment, result, pendingStatus);
+        ExpenseDraft draft = createExpenseDraft(request, apartment, result, pendingStatus, maker);
 
         expenseDraftRepository.save(draft);
     }
@@ -76,36 +78,30 @@ public class ExpenseService {
     //==============================================
     @Transactional
     public void updateDraft(Long apartmentId,Long expenseDraftId, ExpenseDraftRequest payload) {
+        currentUserService.requireApartmentAccess(apartmentId);
+        AppUser editor = currentUserService.getCurrentUser();
 
         // 1. Transaction period validation
         ledgerValidationUtil.validateBillingPeriod(apartmentId,payload.transactionDate());
         // 2. validate the draft id
         var expenseDraft = validateDraftWithApartment(apartmentId,expenseDraftId);
 
-        // Business validation
-        var category =  ledgerCategoryRepository.findById(payload.ledgerCategoryId())
-                .orElseThrow(()-> new BadRequestException("Invalid Ledger Category code"));
-
-        // Make sure the transaction type is Debit
-        entityValidator.throwErrorIfLedgerCategoryCodeNotMatch(category.getTransactionType(),DEBIT_CODE);
+        var entities = entityValidator.validateAndGetEntities(
+            payload.ledgerCategoryId(),
+            payload.paymentModeId());
+        entityValidator.throwErrorIfLedgerCategoryCodeNotMatch(
+            entities.ledgerCategory().getTransactionType(), DEBIT_CODE);
 
         if (!expenseDraft.getApprovalStatus().getStatusName().equals(ApprovalStatusEnum.PENDING.name())) {
             throw new BadRequestException("Only draft with PENDING status can be updated.");
         }
-        var entities =  entityValidator.validateAndGetEntities(
-                apartmentId,
-                payload.ledgerCategoryId(),
-                payload.paymentModeId(),
-                payload.makerId()
-        );
-
-        expenseDraft.setPaymentMode(entities.paymentMode());
-        expenseDraft.setLedgerCategory(entities.ledgerCategory());
+        expenseDraft.setPaymentMode(paymentModeRepository.getReferenceById(entities.paymentMode().getId()));
+        expenseDraft.setLedgerCategory(ledgerCategoryRepository.getReferenceById(entities.ledgerCategory().getId()));
         expenseDraft.setAmount(payload.amount());
         expenseDraft.setReferenceNumber(payload.referenceNumber());
         expenseDraft.setRemarks(payload.remarks());
         // audit
-        expenseDraft.setUpdated_by(entities.user());
+        expenseDraft.setUpdated_by(editor);
         expenseDraft.setUpdatedDate(LocalDateTime.now());
 
         expenseDraftRepository.save(expenseDraft);
@@ -119,6 +115,7 @@ public class ExpenseService {
     // ==========================================
     @Transactional(readOnly = true)
     public List<ExpenseDraftResponse> getPendingDrafts(Long apartmentId) {
+        currentUserService.requireApartmentAccess(apartmentId);
         String pendingStatus =  ApprovalStatusEnum.PENDING.name();
 
         List<ExpenseDraft> drafts = expenseDraftRepository.findByApartmentIdAndApprovalStatus_StatusName(apartmentId, pendingStatus);
@@ -130,6 +127,7 @@ public class ExpenseService {
     //=============================================
     @Transactional(readOnly = true)
     public ExpenseDraftResponse getDraftById(Long apartmentId, Long draftId) {
+        currentUserService.requireApartmentAccess(apartmentId);
         ExpenseDraft expenseDraft = validateDraftWithApartment(apartmentId, draftId);
         return toExpenseDraftResponse(expenseDraft);
     }   
@@ -158,7 +156,8 @@ public class ExpenseService {
             String approvalStatus,
             Short year,
             Short month) {
-        if (month != null && (month < 1 || month > 12)) {
+        currentUserService.requireApartmentAccess(apartmentId);
+        if (!MonthRangeValidator.isValidMonth(month)) {
             throw new BadRequestException("Invalid month [ " + month + " ]");
         }
         // approval status not given, pull only pending drafts
@@ -176,7 +175,8 @@ public class ExpenseService {
     //===============================================
     @Transactional(readOnly = true)
     public List<ExpenseResponse> getExpenseByApartmentYearAndMonth(Long apartmentId, Short year, Short month) {
-        if (month != null && (month < 1 || month > 12)) {
+        currentUserService.requireApartmentAccess(apartmentId);
+        if (!MonthRangeValidator.isValidMonth(month)) {
             throw new BadRequestException("Invalid month [ " + month + " ]");
         }
         var expenses =  expenseRepository.findExpensesByApartmentAndPeriod(apartmentId,year,month).stream().toList();
@@ -235,42 +235,40 @@ public class ExpenseService {
         expense.setApprovedDate(LocalDateTime.now());
         return expense;
     }
-    private static @NonNull ExpenseDraft createExpenseDraft(ExpenseDraftRequest request,
-                                                            Apartment apartment,
-                                                            MasterEntityValidator.EntityResult result,
-                                                            ApprovalStatus pendingStatus) {
+    private @NonNull ExpenseDraft createExpenseDraft(ExpenseDraftRequest request,
+                                                     Apartment apartment,
+                                                     MasterEntityValidator.EntityResult result,
+                                                     ApprovalStatus pendingStatus,
+                                                     AppUser maker) {
         ExpenseDraft draft = new ExpenseDraft();
         draft.setApartment(apartment);
-        draft.setLedgerCategory(result.ledgerCategory());
-        draft.setPaymentMode(result.paymentMode());
+        draft.setLedgerCategory(ledgerCategoryRepository.getReferenceById(result.ledgerCategory().getId()));
+        draft.setPaymentMode(paymentModeRepository.getReferenceById(result.paymentMode().getId()));
         draft.setTransactionDate(request.transactionDate());
         draft.setAmount(request.amount());
         draft.setReferenceNumber(request.referenceNumber());
         draft.setRemarks(request.remarks());
         draft.setApprovalStatus(pendingStatus);
-        draft.setCreatedBy(result.user());
+        draft.setCreatedBy(maker);
         return draft;
     }
     private ExpenseDraft validateDraftWithApartment(Long apartmentId,Long draftId){
-        ExpenseDraft draft = expenseDraftRepository.findById(draftId)
+        return expenseDraftRepository.findByIdAndApartmentId(draftId, apartmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Draft not found: " + draftId));
-
-        if (!draft.getApartment().getId().equals(apartmentId)) {
-            throw new BadRequestException("Draft does not belong to apartment " + apartmentId);
-            }
-        return draft;
     }
     //=====================================================
     // Common method to Reject or Approve
     //======================================================
     @Transactional
     private String draftApprovalDecision(Long apartmentId, ExpenseApprovalRequest request, ApprovalStatusEnum approvalStatusEnum) {
+        currentUserService.requireApartmentAccess(apartmentId);
+        AppUser approver = currentUserService.getCurrentUser();
 
-        AppUser approver = appUserRepository.findById(request.userId())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found for id [" + request.userId() + "]"));
-
-        ApprovalStatus targetStatus = approvalStatusRepository.findByStatusNameIgnoreCase(approvalStatusEnum.name())
-                .orElseThrow(() -> new ResourceNotFoundException("Approval status not found in database"));
+        ApprovalStatus cachedStatus = lookupCacheService.getApprovalStatusByName(approvalStatusEnum.name());
+        if (cachedStatus == null) {
+            throw new ResourceNotFoundException("Approval status not found in database");
+        }
+        ApprovalStatus targetStatus = approvalStatusRepository.getReferenceById(cachedStatus.getId());
 
         List<Expense> finalLedgerEntries = new ArrayList<>();
         List<ExpenseDraft> draftsToUpdate = new ArrayList<>();
@@ -301,6 +299,7 @@ public class ExpenseService {
     // Reports
     // Summary by Ledger Category
     public List<LedgerCategoryExpenseSummary> getExpenseSummaryByCategory(Long apartmentId, Short year, Short month) {
-            return expenseRepository.getExpenseSummaryByCategory(apartmentId,year, month);
+        currentUserService.requireApartmentAccess(apartmentId);
+        return expenseRepository.getExpenseSummaryByCategory(apartmentId,year, month);
     }
 }

@@ -1,5 +1,9 @@
 package com.yesh.apartmentledger.auth.dto;
 
+import com.yesh.apartmentledger.master.role.entity.Role;
+
+import java.util.List;
+
 public record AuthResponse(
         Long userId,
         String token,
@@ -10,5 +14,6 @@ public record AuthResponse(
         Long flatId,
         String flatNumber,
         boolean isAdmin,
+        List<String> roleNames,
         String message
 ) {}

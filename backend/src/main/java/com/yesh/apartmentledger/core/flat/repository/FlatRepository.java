@@ -10,10 +10,14 @@ public interface FlatRepository extends JpaRepository<Flat, Long> {
     // Used during registration to validate the owner's mobile number
     Optional<Flat> findByOwnerMobile(String ownerMobile);
 
+    Optional<Flat> findByOwnerMobileAndApartmentId(String ownerMobile, Long apartmentId);
+
     // Fetch all flats for a specific apartment
     List<Flat> findByApartmentId(Long apartmentId);
 
     Optional<Flat> findByIdAndApartmentId(Long flatId, Long apartmentId);
+
+    Optional<Flat> findByFlatNumberAndApartmentId(String flatNumber, Long apartmentId);
 
 
 }

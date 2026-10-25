@@ -10,6 +10,7 @@ import com.yesh.apartmentledger.core.user.repository.AppUserRepository;
 import com.yesh.apartmentledger.exception.BadRequestException;
 
 import com.yesh.apartmentledger.exception.ResourceNotFoundException;
+import com.yesh.apartmentledger.master.role.entity.Role;
 import com.yesh.apartmentledger.master.role.repository.RoleRepository;
 import com.yesh.apartmentledger.security.model.CustomUserDetails;
 import com.yesh.apartmentledger.security.service.JwtService;
@@ -34,10 +35,10 @@ public class AuthService {
     /**
      * User registration
      * @param request User register form
-     * @return AuthResponse
+
      */
     @Transactional
-    public AuthResponse register(RegisterRequest request) {
+    public void register(RegisterRequest request) {
         // 1. Check if email already exists to prevent duplicates
         if (appUserRepository.existsByEmail(request.email())) {
             throw new BadRequestException( "Email is already registered.");
@@ -67,19 +68,6 @@ public class AuthService {
 
         appUserRepository.save(user);
 
-        // 4. Optionally generate a token immediately upon registration, or force them to log in.
-        return new AuthResponse(
-                user.getId(),
-                null,
-                user.getDisplayName(),
-                user.getEmail(),
-                flat.getApartment().getId(),
-                flat.getApartment().getApartmentName(),
-                flat.getId(),
-                flat.getFlatNumber(),
-                defaultRole.getRoleName().equalsIgnoreCase(ADMIN_USER),
-                "Registration successful. Please log in."
-        );
     }
 
     /**
@@ -92,7 +80,7 @@ public class AuthService {
         // 1. Fetch the user manually from the database
         AppUser user;
         user = appUserRepository.findByEmail(request.email())
-                .orElseThrow(() -> new BadRequestException("Invalid email Id password."));
+                .orElseThrow(() -> new BadRequestException("Invalid email Id or password."));
 
         // 2. Manually check if the password matches the hash in the database
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
@@ -114,6 +102,7 @@ public class AuthService {
                 user.getFlat().getId(),
                 user.getFlat().getFlatNumber(),
                 isAdmin,
+                user.getRoles().stream().map(Role::getRoleName).toList(),
                 "Login successful."
         );
     }

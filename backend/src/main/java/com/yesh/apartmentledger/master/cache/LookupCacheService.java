@@ -56,7 +56,7 @@ public class LookupCacheService {
                         toMap(PaymentMode::getId,
                    paymentMode -> paymentMode));
 
-        System.out.println("--> Lookup tables successfully loaded into memory cache!");
+       // System.out.println("--> Lookup tables successfully loaded into memory cache!");
     }
 
     // Fast in-memory getters (No Database Hits!)
@@ -67,7 +67,15 @@ public class LookupCacheService {
     public ApprovalStatus getApprovalStatusById(Long id) {
         return approvalStatusMap.get(id);
     }
+    // approval status by name
+    public ApprovalStatus getApprovalStatusByName(String name) {
+        return cachedApprovalStatuses.stream()
+                .filter(status -> status.getStatusName().equalsIgnoreCase(name))
+                .findFirst()
+                .orElse(null);
+    }
 
+    // Ledger categories
     public List<LedgerCategory> getLedgerCategories() {
         return cachedLedgerCategories;
     }
@@ -75,11 +83,23 @@ public class LookupCacheService {
     public LedgerCategory getLedgerCategoryById(Long id) {
         return cachedLedgerCategoryMap.get(id);
     }
-
+    public LedgerCategory getLedgerCategoryByName(String name) {
+        return cachedLedgerCategories.stream()
+                .filter(lc -> lc.getCategoryName().equalsIgnoreCase(name))
+                .findFirst()
+                .orElse(null);
+    }
+    // Payment modes
     public List<PaymentMode> getPaymentModes() {
         return cachedPaymentModes;
     }
     public PaymentMode getPaymentModeById(Long id) {
         return cachedPaymentModeMap.get(id);
+    }
+    public PaymentMode getPaymentModeByName(String name) {
+        return cachedPaymentModes.stream()
+                .filter(pm -> pm.getPaymentModeName().equalsIgnoreCase(name))
+                .findFirst()
+                .orElse(null);
     }
 }

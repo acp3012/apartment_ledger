@@ -1,5 +1,6 @@
 package com.yesh.apartmentledger.finance.income.service;
 
+import com.yesh.apartmentledger.core.validation.MonthRangeValidator;
 import com.yesh.apartmentledger.core.apartment.entity.Apartment;
 import com.yesh.apartmentledger.core.apartment.repository.ApartmentRepository;
 import com.yesh.apartmentledger.core.enums.ApprovalStatusEnum;
@@ -7,8 +8,6 @@ import com.yesh.apartmentledger.core.enums.TransactionTypeEnum;
 import com.yesh.apartmentledger.core.flat.entity.Flat;
 import com.yesh.apartmentledger.core.flat.repository.FlatRepository;
 import com.yesh.apartmentledger.core.user.entity.AppUser;
-import com.yesh.apartmentledger.core.user.repository.AppUserRepository;
-import com.yesh.apartmentledger.core.validation.LedgerValidationUtil;
 import com.yesh.apartmentledger.exception.BadRequestException;
 import com.yesh.apartmentledger.exception.ResourceNotFoundException;
 import com.yesh.apartmentledger.finance.income.dto.*;
@@ -18,15 +17,15 @@ import com.yesh.apartmentledger.finance.income.repository.IncomeDraftRepository;
 import com.yesh.apartmentledger.finance.income.repository.IncomeRepository;
 import com.yesh.apartmentledger.master.approvalstatus.entity.ApprovalStatus;
 import com.yesh.apartmentledger.master.approvalstatus.repository.ApprovalStatusRepository;
+import com.yesh.apartmentledger.master.cache.LookupCacheService;
 import com.yesh.apartmentledger.master.ledgercategory.entity.LedgerCategory;
 import com.yesh.apartmentledger.master.ledgercategory.repository.LedgerCategoryRepository;
 import com.yesh.apartmentledger.master.paymentmode.entity.PaymentMode;
 import com.yesh.apartmentledger.master.paymentmode.repository.PaymentModeRepository;
-import com.yesh.apartmentledger.security.model.CustomUserDetails;
+import com.yesh.apartmentledger.security.service.CurrentUserService;
 import lombok.AllArgsConstructor;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,43 +46,49 @@ public class IncomeDraftService {
     private final PaymentModeRepository paymentModeRepository;
     private final LedgerCategoryRepository ledgerCategoryRepository;
     private final ApprovalStatusRepository approvalStatusRepository;
-    private final AppUserRepository appUserRepository;
-    private final LedgerValidationUtil legerValidationUtil;
+    private final LookupCacheService lookupCacheService;
+    private final CurrentUserService currentUserService;
 
     @Transactional
     public void createDraft(Long apartmentId, IncomeDraftRequest request) {
+        currentUserService.requireApartmentAccess(apartmentId);
 
         // 1. Fetch Multi-tenant context
         Apartment apartment = apartmentRepository.findById(apartmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Apartment not found"));
 
         // 2. Fetch the Maker
-        AppUser maker = appUserRepository.findById(request.makerId())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        AppUser maker = currentUserService.getCurrentUser();
 
         // 3. Fetch Master Data
 
-        LedgerCategory category = ledgerCategoryRepository.findById(request.ledgerCategoryId())
-                .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
+        LedgerCategory category = lookupCacheService.getLedgerCategoryById(request.ledgerCategoryId());
+        if (category == null) {
+            throw new ResourceNotFoundException("Category not found");
+        }
 
         if(!category.getTransactionType().equalsIgnoreCase(TransactionTypeEnum.CR.name())){
             throw new BadRequestException("Ledger Category must be a Credit");
         }
-        PaymentMode paymentMode = paymentModeRepository.findById(request.paymentModeId())
-                .orElseThrow(() -> new ResourceNotFoundException("Payment Mode not found"));
+        PaymentMode paymentMode = lookupCacheService.getPaymentModeById(request.paymentModeId());
+        if (paymentMode == null) {
+            throw new ResourceNotFoundException("Payment Mode not found");
+        }
 
         // 4. Fetch the initial 'PENDING' approval status.
         // Assuming 'PENDING' is a valid status_code in your master table.
-        ApprovalStatus pendingStatus = approvalStatusRepository.findByStatusNameIgnoreCase(ApprovalStatusEnum.PENDING.name())
-                .orElseThrow(() -> new ResourceNotFoundException("Default approval status not found"));
+        ApprovalStatus cachedPendingStatus = lookupCacheService.getApprovalStatusByName(ApprovalStatusEnum.PENDING.name());
+        if (cachedPendingStatus == null) {
+            throw new ResourceNotFoundException("Default approval status not found");
+        }
         //var statusId = ApprovalStatusEnum.PENDING.getValue();
         // 5. Build the Draft Entity
         IncomeDraft draft = new IncomeDraft();
         draft.setApartment(apartment);
         draft.setCreatedBy(maker);
-        draft.setLedgerCategory(category);
-        draft.setPaymentMode(paymentMode);
-        draft.setApprovalStatus(pendingStatus);
+        draft.setLedgerCategory(ledgerCategoryRepository.getReferenceById(category.getId()));
+        draft.setPaymentMode(paymentModeRepository.getReferenceById(paymentMode.getId()));
+        draft.setApprovalStatus(approvalStatusRepository.getReferenceById(cachedPendingStatus.getId()));
 
         // Map the basic fields from the Request Record
         draft.setAmount(request.amount());
@@ -96,13 +101,8 @@ public class IncomeDraftService {
 
         // 6. Conditionally set the Flat (Only for Maintenance Tab)
         if (request.flatId() != null) {
-            Flat flat = flatRepository.findById(request.flatId())
+            Flat flat = flatRepository.findByIdAndApartmentId(request.flatId(), apartmentId)
                     .orElseThrow(() -> new ResourceNotFoundException("Flat not found"));
-
-            // Security check: Ensure the flat actually belongs to this apartment!
-            if (!flat.getApartment().getId().equals(apartmentId)) {
-                throw new IllegalStateException("Flat does not belong to the given apartment");
-            }
 
             draft.setFlat(flat);
         }
@@ -115,6 +115,7 @@ public class IncomeDraftService {
     //=============================================================
     @Transactional
     public void updateDraft(Long apartmentId, Long draftId, IncomeDraftRequest payload) {
+        currentUserService.requireApartmentAccess(apartmentId);
         // find the draftId
         // 1. Fetch the draft and ensure it belongs to the specified apartment
         var income = incomeDraftRepository.findByIdAndApartmentId(draftId, apartmentId)
@@ -131,15 +132,26 @@ public class IncomeDraftService {
         income.setAmount(payload.amount());
         income.setReferenceNumber(payload.referenceNumber());
         // 4. Update relationships using fast proxies
-        income.setLedgerCategory(ledgerCategoryRepository.getReferenceById(payload.ledgerCategoryId()));
-        income.setPaymentMode(paymentModeRepository.getReferenceById(payload.paymentModeId()));
+        LedgerCategory category = lookupCacheService.getLedgerCategoryById(payload.ledgerCategoryId());
+        if (category == null) {
+            throw new ResourceNotFoundException("Category not found");
+        }
+        PaymentMode paymentMode = lookupCacheService.getPaymentModeById(payload.paymentModeId());
+        if (paymentMode == null) {
+            throw new ResourceNotFoundException("Payment Mode not found");
+        }
+        income.setLedgerCategory(ledgerCategoryRepository.getReferenceById(category.getId()));
+        income.setPaymentMode(paymentModeRepository.getReferenceById(paymentMode.getId()));
         income.setApartment(apartmentRepository.getReferenceById(apartmentId));
         // Safely handle flat mapping (in case it's a general apartment income without a flat)
         if (payload.flatId() != null) {
-            income.setFlat(flatRepository.getReferenceById(payload.flatId()));
+            Flat flat = flatRepository.findByIdAndApartmentId(payload.flatId(), apartmentId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Flat not found"));
+            income.setFlat(flat);
         } else {
             income.setFlat(null);
         }
+        income.setUpdatedBy(currentUserService.getCurrentUser());
         incomeDraftRepository.save(income);
     }
 
@@ -155,7 +167,8 @@ public class IncomeDraftService {
             @Nullable Short year,
             @Nullable Short month
             ) {
-         if(month != null && ( month < 1 || month > 12)) {
+            currentUserService.requireApartmentAccess(apartmentId);
+         if(!MonthRangeValidator.isValidMonth(month)) {
              throw new BadRequestException("Invalid month [ " + month + " ]");
          }
          Long statusId =  null ;
@@ -175,21 +188,24 @@ public class IncomeDraftService {
 
     @Transactional
     public String draftApprovalDecision(Long apartmentId, DraftApprovalRequest request, ApprovalStatusEnum approvalStatusEnum) {
+        currentUserService.requireApartmentAccess(apartmentId);
 
         var processTime = LocalDateTime.now();
 
-        AppUser approver = appUserRepository.findById(request.approverId())
-                .orElseThrow(() -> new ResourceNotFoundException("Approver user not found"));
+        AppUser approver = currentUserService.getCurrentUser();
 
         boolean isApproved = ApprovalStatusEnum.APPROVED == approvalStatusEnum;
-        ApprovalStatus approvedStatus = approvalStatusRepository.findByStatusNameIgnoreCase(approvalStatusEnum.name())
-                .orElseThrow(()-> new ResourceNotFoundException("Approval status not found"));
+        ApprovalStatus cachedStatus = lookupCacheService.getApprovalStatusByName(approvalStatusEnum.name());
+        if (cachedStatus == null) {
+            throw new ResourceNotFoundException("Approval status not found");
+        }
+        ApprovalStatus approvedStatus = approvalStatusRepository.getReferenceById(cachedStatus.getId());
 
         List<Income> finalIncomeEntries = new ArrayList<>();
         List<IncomeDraft> draftsToUpdate = new ArrayList<>();
 
         for (Long draftId : request.draftIds()) {
-            IncomeDraft draft = incomeDraftRepository.findById(draftId)
+                IncomeDraft draft = incomeDraftRepository.findByIdAndApartmentId(draftId, apartmentId)
                     .orElseThrow(() -> new ResourceNotFoundException("Draft not found: " + draftId));
 
             // 1. Update the Draft Audit Trail
@@ -256,41 +272,5 @@ public class IncomeDraftService {
                 entity.getCreatedBy().getDisplayName(),
                 entity.getLedgerCategory().getId()
         );
-    }
-
-   
-    // Helper to safely extract the Apartment ID from the JWT Context
-
-    private Long getCurrentApartmentId() {
-        var auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.getPrincipal() instanceof CustomUserDetails user) {
-            return user.getApartmentId();
-        }
-        throw new IllegalStateException("Security context missing or invalid.");
-    }
-
-    /**
-     * Helper to get the logged-in User entity
-     */
-    private AppUser getCurrentUser() {
-        var auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.getPrincipal() instanceof CustomUserDetails userDetails) {
-            return appUserRepository.findByEmail(userDetails.getUsername())
-                    .orElseThrow(() -> new IllegalStateException("User not found"));
-        }
-        throw new IllegalStateException("User not found in context");
-    }
-
-
-    private Long getApprovalStatusEnum(String statusName){
-        Long statusId;
-        try {
-            statusId =  ApprovalStatusEnum.getValueByText(statusName);
-        }
-        catch(Exception e){
-            throw new ResourceNotFoundException("Approval status [" + statusName + "] does not exists");
-        }
-        return statusId;
-
     }
 }

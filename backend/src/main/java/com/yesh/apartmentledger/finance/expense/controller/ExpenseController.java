@@ -1,12 +1,11 @@
 package com.yesh.apartmentledger.finance.expense.controller;
 
+import com.yesh.apartmentledger.core.validation.ValidMonth;
 import com.yesh.apartmentledger.finance.expense.dto.*;
 import com.yesh.apartmentledger.finance.expense.service.ExpenseService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -59,9 +58,9 @@ public class ExpenseController {
         return ResponseEntity.status(HttpStatus.OK).body("Draft updated successfully.");
 
     }
-    // GET drafts
-    // /api/v1/apartments/{apartmentId}/expenses/drafts?approvalStatus=PENDING&year=2026&month=8
-        @Operation(summary = "List expense drafts",
+    // GET fetch all drafts by apartmentId and optional approvalStatus, year, month
+    // /api/v1/apartments/{apartmentId}/expenses/drafts?approvalStatus=APPROVED&year=2026&month=8
+    @Operation(summary = "List expense drafts",
             description = "Returns expense drafts for an apartment, optionally filtered by approval status, year, and month.")
     @GetMapping("/drafts")
     public ResponseEntity<List<ExpenseDraftResponse>> getAllDrafts(
@@ -71,14 +70,15 @@ public class ExpenseController {
             @Parameter(description = "Optional calendar year to filter drafts.")
             @RequestParam(required = false) Short year,
             @Parameter(description = "Optional month, from 1 to 12, to filter drafts.")
-            @Min(1) @Max(12)
+            @ValidMonth
             @RequestParam(required = false) Short month) {
         return ResponseEntity.ok(expenseService.getDraftsByApprovalStatusYearAndMonth(apartmentId, approvalStatus, year, month));
     }
+
     // GET fetch draft by id
     // /api/v1/apartments/{apartmentId}/expenses/drafts/{draftId}``
-        @Operation(summary = "Get an expense draft",
-            description = "Returns the specified expense draft belonging to the apartment.")
+    @Operation(summary = "Get an expense draft",
+        description = "Returns the specified expense draft belonging to the apartment.")
     @GetMapping("/drafts/{draftId}")
     public ResponseEntity<ExpenseDraftResponse> getDraftById(
             @Parameter(description = "ID of the apartment.") @PathVariable Long apartmentId,
@@ -89,7 +89,7 @@ public class ExpenseController {
 
     @Operation(summary = "Approve expense drafts",
         description = "Approves the drafts identified in the request for the specified apartment.")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') and @apartmentAuthorization.canAccess(#p0)")
     @PostMapping("/drafts/approve-bulk")
     public ResponseEntity<String> approveDrafts(
         @Parameter(description = "ID of the apartment.") @PathVariable Long apartmentId,
@@ -99,9 +99,9 @@ public class ExpenseController {
         return ResponseEntity.ok(expenseService.approveDrafts(apartmentId, request));
     }
 
-        @Operation(summary = "Reject expense drafts",
-            description = "Rejects the drafts identified in the request for the specified apartment.")
-        @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Reject expense drafts",
+        description = "Rejects the drafts identified in the request for the specified apartment.")
+    @PreAuthorize("hasRole('ADMIN') and @apartmentAuthorization.canAccess(#p0)")
     @PostMapping("/drafts/reject-bulk")
     public ResponseEntity<String> rejectDrafts(
             @Parameter(description = "ID of the apartment.") @PathVariable Long apartmentId,
@@ -114,7 +114,7 @@ public class ExpenseController {
     // GET Approved Expenses (Read-only)
     //====================================================
     // /api/v1/apartments/{apartmentId}/expenses?year=2026&month=8
-        @Operation(summary = "List approved expenses",
+    @Operation(summary = "List approved expenses",
             description = "Returns approved expenses for an apartment, optionally filtered by year and month.")
     @GetMapping
     public ResponseEntity<List<ExpenseResponse>> getAllExpenses(
@@ -122,7 +122,7 @@ public class ExpenseController {
             @Parameter(description = "Optional calendar year to filter expenses.")
             @RequestParam(required = false) Short year,
             @Parameter(description = "Optional month, from 1 to 12, to filter expenses.")
-            @Min(1) @Max(12)
+            @ValidMonth
             @RequestParam(required = false) Short month) {
         return ResponseEntity.ok(expenseService.getExpenseByApartmentYearAndMonth(apartmentId, year, month));
     }
@@ -135,7 +135,7 @@ public class ExpenseController {
         @Parameter(description = "ID of the apartment.") @PathVariable Long apartmentId,
         @Parameter(description = "Calendar year of the expense period.") @RequestParam Short year,
         @Parameter(description = "Month of the expense period, from 1 to 12.")
-        @Min(1) @Max(12)
+        @ValidMonth
         @RequestParam Short month) {
 
         return ResponseEntity.ok(expenseService.getExpenseSummaryByCategory(apartmentId,year,month));

@@ -2,34 +2,45 @@ package com.yesh.apartmentledger.exception;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
+
+import org.springframework.context.MessageSourceResolvable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import jakarta.validation.ConstraintViolationException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     // 1. Handle 404 Not Found
     @ExceptionHandler(ResourceNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
     public ResponseEntity<ApiErrorResponse> handleResourceNotFoundException(ResourceNotFoundException ex) {
         return formatErrorResponse("NOT_FOUND", ex.getMessage(), HttpStatus.NOT_FOUND);
     }
 
     // 2. Handle 400 Bad Request
     @ExceptionHandler(BadRequestException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<ApiErrorResponse> handleBadRequestException(BadRequestException ex) {
         return formatErrorResponse("BAD_REQUEST",ex.getMessage(),HttpStatus.BAD_REQUEST);
     }
 
     // 3. Handle 409 Conflict (Resource Already Exists)
     @ExceptionHandler(ResourceAlreadyExistsException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
     public ResponseEntity<ApiErrorResponse> handleResourceAlreadyExistsException(ResourceAlreadyExistsException ex) {
         return formatErrorResponse("CONFLICT",ex.getMessage(),HttpStatus.CONFLICT);
     }
 
     // 4. Global Fallback for anything else (500 Internal Server Error)
     @ExceptionHandler(Exception.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ResponseEntity<ApiErrorResponse> handleGlobalException(Exception ex) {
         ex.printStackTrace(); // Keep this for your console logs
         return formatErrorResponse("Internal Server Error","An unexpected error occurred. Please try again later.",HttpStatus.INTERNAL_SERVER_ERROR);
@@ -42,6 +53,38 @@ public class GlobalExceptionHandler {
             .map(err -> err.getDefaultMessage())
             .orElse("Invalid request");
         return formatErrorResponse("BAD_REQUEST", msg, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    public ResponseEntity<ApiErrorResponse> handleMethodValidationException(HandlerMethodValidationException ex) {
+        @SuppressWarnings("null")
+        String msg = ex.getAllErrors().stream()
+            .map(MessageSourceResolvable::getDefaultMessage)
+            .filter(message -> message != null)
+            .findFirst()
+            .orElse("Invalid request parameter");
+        return formatErrorResponse("BAD_REQUEST", msg, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ApiErrorResponse> handleConstraintViolationException(ConstraintViolationException ex) {
+        String msg = ex.getConstraintViolations().stream()
+            .map(violation -> violation.getMessage())
+            .findFirst()
+            .orElse("Invalid request");
+        return formatErrorResponse("BAD_REQUEST", msg, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ApiErrorResponse> handleAuthenticationException(AuthenticationException ex) {
+        return formatErrorResponse(
+            "UNAUTHORIZED", "Authentication is required or the token is invalid.", HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiErrorResponse> handleAccessDeniedException(AccessDeniedException ex) {
+        return formatErrorResponse(
+                "FORBIDDEN", "You are not authorized to access this resource.", HttpStatus.FORBIDDEN);
     }
     //==============================================================
     // Database level error : Catches Foreign Key failures triggered by getReferenceById()

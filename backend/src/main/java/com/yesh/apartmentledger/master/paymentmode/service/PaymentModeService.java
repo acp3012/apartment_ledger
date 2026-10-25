@@ -1,25 +1,29 @@
 package com.yesh.apartmentledger.master.paymentmode.service;
 
 import com.yesh.apartmentledger.exception.ResourceNotFoundException;
+import com.yesh.apartmentledger.master.cache.LookupCacheService;
 import com.yesh.apartmentledger.master.paymentmode.entity.PaymentMode;
-import com.yesh.apartmentledger.master.paymentmode.repository.PaymentModeRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @AllArgsConstructor
 public class PaymentModeService {
-    private final PaymentModeRepository paymentModeRepository;
+    private final LookupCacheService lookupCacheService;
 
     public PaymentMode getPaymentModeByName(String paymentModeName) {
-        Optional<PaymentMode> paymentMode = Optional.of(paymentModeRepository.findByPaymentModeNameIgnoreCase(paymentModeName)
-                .orElseThrow(() -> new ResourceNotFoundException("Payment mode not found for :" + paymentModeName)));
-        return paymentMode.get();
+        PaymentMode paymentMode = lookupCacheService.getPaymentModeByName(paymentModeName);
+        if (paymentMode == null) {
+            throw new ResourceNotFoundException("Payment mode not found for :" + paymentModeName);
+        }
+        return paymentMode;
     }
     public List<PaymentMode> getAllActivePaymentModes(){
-        return paymentModeRepository.findByIsActiveTrueOrderByDisplayOrderAsc();
+        return lookupCacheService.getPaymentModes().stream()
+                .filter(paymentMode -> Boolean.TRUE.equals(paymentMode.getIsActive()))
+            .sorted((left, right) -> Integer.compare(left.getDisplayOrder(), right.getDisplayOrder()))
+                .toList();
     }
 }
