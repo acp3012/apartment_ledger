@@ -1,7 +1,9 @@
 package com.yesh.apartmentledger.auth.service;
 
 import com.yesh.apartmentledger.auth.dto.AuthResponse;
+import com.yesh.apartmentledger.auth.dto.CreatePasswordRequest;
 import com.yesh.apartmentledger.auth.dto.LoginRequest;
+import com.yesh.apartmentledger.auth.dto.PasswordChangeRequest;
 import com.yesh.apartmentledger.auth.dto.RegisterRequest;
 import com.yesh.apartmentledger.core.flat.entity.Flat;
 import com.yesh.apartmentledger.core.flat.repository.FlatRepository;
@@ -15,6 +17,8 @@ import com.yesh.apartmentledger.master.role.repository.RoleRepository;
 import com.yesh.apartmentledger.security.model.CustomUserDetails;
 import com.yesh.apartmentledger.security.service.JwtService;
 import lombok.AllArgsConstructor;
+
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -69,15 +73,29 @@ public class AuthService {
         appUserRepository.save(user);
 
     }
+    @Transactional (readOnly = true) 
+    
+    public AuthResponse firstTimeAdminLogin(String email) {
+        
+        AppUser user = isFirstTimeAdminUser(email);
+        
+        return createAuthResponse(user, null);
+    } 
 
+     public void createAdminPassword(CreatePasswordRequest request) {
+        AppUser user = isFirstTimeAdminUser(request.emailId());
+        user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+        user.setPasswordChangedDate(java.time.LocalDateTime.now());
+        appUserRepository.save(user);
+    }
     /**
      * User login
      * @param request LoginRequest
      * @return AuthResponse
      */
-    @Transactional(readOnly = true) // <--To avoid Lazyloading error
+    @Transactional(readOnly = true) 
     public AuthResponse login(LoginRequest request) {
-        // 1. Fetch the user manually from the database
+      
         AppUser user;
         user = appUserRepository.findByEmail(request.email())
                 .orElseThrow(() -> new BadRequestException("Invalid email Id or password."));
@@ -89,9 +107,44 @@ public class AuthService {
         if (!Boolean.TRUE.equals(user.getIsActive()) || Boolean.TRUE.equals(user.getIsLocked())) {
             throw new BadRequestException("This account is inactive or locked.");
         }
+        return createAuthResponse(user, user.getFlat());
+    }
+
+ 
+
+    
+    public  String hashPassword(String password) {
+        // Implement your password hashing logic here
+        // For example, you can use BCrypt or any other secure hashing algorithm
+    
+         return new BCryptPasswordEncoder().encode(password);
+    }
+
+    
+    public void resetPassword(PasswordChangeRequest passwordChangeRequest) {
+        
+        AppUser user = appUserRepository.findByEmailAndIsActiveTrue(passwordChangeRequest.emailId())
+                .orElseThrow(() -> new BadRequestException("Invalid email Id or the account is inactive."));
+
+        if (!passwordEncoder.matches(passwordChangeRequest.oldPassword(), user.getPasswordHash())) {
+            throw new BadRequestException("Old password didn't match");
+        }
+        if (passwordEncoder.matches(passwordChangeRequest.newPassword(), user.getPasswordHash())) {
+            throw new BadRequestException("Recently used passwords not allowed.");
+        }
+
+
+        user.setPasswordHash(passwordEncoder.encode(passwordChangeRequest.newPassword()));
+        user.setPasswordChangedDate(java.time.LocalDateTime.now());
+        
+        appUserRepository.save(user);
+    }
+
+       private AuthResponse createAuthResponse(AppUser user, Flat flat) {
         boolean isAdmin = user.getRoles().stream()
                 .anyMatch(role -> role.getRoleName().equalsIgnoreCase(ADMIN_USER));
         String token = jwtService.generateToken(new CustomUserDetails(user));
+
         return new AuthResponse(
                 user.getId(),
                 token,
@@ -99,11 +152,33 @@ public class AuthService {
                 user.getEmail(),
                 user.getApartment().getId(),
                 user.getApartment().getApartmentName(),
-                user.getFlat().getId(),
-                user.getFlat().getFlatNumber(),
+                flat != null ? flat.getId() : null,
+                flat != null ? flat.getFlatNumber() : null,
+                flat != null ? flat.getOwnerName() : null,
                 isAdmin,
+                Boolean.TRUE.equals(user.getApartment().getIsSetupCompleted()),
                 user.getRoles().stream().map(Role::getRoleName).toList(),
                 "Login successful."
         );
     }
+    
+    private AppUser isFirstTimeAdminUser(String emailId) {
+       
+        AppUser user = appUserRepository.findByEmail(emailId)
+                .orElseThrow(() -> new BadRequestException("Invalid email Id."));
+
+        boolean isAdmin = user.getRoles().stream()
+                .anyMatch(role -> role.getRoleName().equalsIgnoreCase(ADMIN_USER));
+
+        if (!isAdmin) {
+            throw new BadRequestException("This account is not an admin.");
+        }
+        if(!(user.getPasswordChangedDate() == null)) {
+            throw new BadRequestException("You are not a first time admin user. Please use the login API.");
+        }
+        // You can also generate a token or perform other actions as needed
+        return user;
+    }
+   
+
 }

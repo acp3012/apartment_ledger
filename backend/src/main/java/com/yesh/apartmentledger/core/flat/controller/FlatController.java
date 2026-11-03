@@ -35,6 +35,15 @@ public class FlatController {
         return ResponseEntity.ok(response);
     }
 
+    @PutMapping("/{flatId}")
+    public ResponseEntity<FlatResponse> updateFlat(
+            @PathVariable Long apartmentId,
+            @PathVariable Long flatId,
+            @Valid @RequestBody FlatRequest request) {
+
+        return ResponseEntity.ok(flatService.updateFlat(apartmentId, flatId, request));
+    }
+
     @GetMapping()
     public ResponseEntity<List<FlatResponse>> getFlatsByApartment(@PathVariable Long apartmentId) {
         

@@ -4,6 +4,7 @@ import com.yesh.apartmentledger.security.filter.JwtAuthenticationFilter;
 import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -45,6 +46,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(
         HttpSecurity http,
         Environment environment,
+        CorsConfigurationSource corsConfigurationSource,
         @Qualifier("handlerExceptionResolver") HandlerExceptionResolver exceptionResolver) throws Exception {
         
             String[] swaggerPaths = environment.acceptsProfiles(Profiles.of("dev"))
@@ -52,7 +54,7 @@ public class SecurityConfig {
                 : new String[] {};
 
         http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                .exceptionHandling(exceptions -> exceptions
@@ -80,17 +82,18 @@ public class SecurityConfig {
     }
 
     @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
+    public CorsConfigurationSource corsConfigurationSource(
+            @Value("${app.cors.allowed-origin-patterns}") List<String> allowedOriginPatterns,
+            @Value("${app.cors.allowed-methods}") List<String> allowedMethods,
+            @Value("${app.cors.allowed-headers}") List<String> allowedHeaders,
+            @Value("${app.cors.allow-credentials}") boolean allowCredentials) {
         CorsConfiguration configuration = new CorsConfiguration();
-
-        // Explicitly allow your React frontend
-        configuration.setAllowedOrigins(List.of("http://localhost:5173"));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        configuration.setAllowedHeaders(List.of("*"));
-        configuration.setAllowCredentials(true);
+        configuration.setAllowedOriginPatterns(allowedOriginPatterns);
+        configuration.setAllowedMethods(allowedMethods);
+        configuration.setAllowedHeaders(allowedHeaders);
+        configuration.setAllowCredentials(allowCredentials);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        // Apply these rules to ALL endpoints ("/**")
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }

@@ -53,4 +53,8 @@ public class Apartment extends BaseAuditEntity {
 
     @Column(name = "go_live_month")
     private Short goLiveMonth;
+ 
+    @Column(name = "is_setup_completed", nullable = false)
+    private Boolean isSetupCompleted = false;
+
 }

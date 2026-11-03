@@ -17,6 +17,8 @@ import com.yesh.apartmentledger.finance.ledger.entity.MonthlyLedger;
 import com.yesh.apartmentledger.finance.ledger.repository.LedgerPeriodRepository;
 import com.yesh.apartmentledger.finance.ledger.repository.MonthlyLedgerRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,8 +28,10 @@ import java.time.YearMonth;
 import java.util.Optional;
 // ... imports
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
+@Log4j2
 public class LedgerService {
     private final LedgerPeriodRepository ledgerPeriodRepository;
     private final MonthlyLedgerRepository monthlyLedgerRepository;
@@ -210,9 +214,16 @@ public class LedgerService {
     public MonthlyLedger createMonthlyLedger(Long apartmentId, MonthlyLedgerRequest request) {
 
         var apartment = apartmentRepository.findById(apartmentId).orElseThrow(()-> new ResourceNotFoundException("Apartment id not found"));
+        if (Boolean.TRUE.equals(apartment.getIsSetupCompleted())) {
+            throw new BadRequestException(
+                    "The one-time setup has been completed and opening-balance entry is locked.");
+        }
         var openingYearMonth = YearMonth.of(apartment.getGoLiveYear(), apartment.getGoLiveMonth());
         var requestYearMonth = YearMonth.of(request.year(), request.month());
-        
+        log.info("apartment live period " + openingYearMonth);
+        log.info("requested period " + requestYearMonth);
+
+
         // Throws an error if the requested period is equal to or ahead of the go-live period
         if (!requestYearMonth.isBefore(openingYearMonth)) {
             throw new BadRequestException("Ledger manual creation period must be prior to or equal to the apartment go live period.");

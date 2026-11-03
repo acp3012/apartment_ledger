@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import MainLayout from "./layouts/MainLayout";
 import LoginPage from "./pages/LoginPage";
+import FirstTimeAdminPage from "./pages/FirstTimeAdminPage";
+import FirstTimeAdminPasswordPage from "./pages/FirstTimeAdminPasswordPage";
 import RegisterPage from "./pages/RegisterPage";
 import DashboardPage from "./pages/DashboardPage";
 import FinanceWorkspacePage from "./pages/FinanceWorkspacePage";
@@ -8,6 +10,10 @@ import IncomePage from "./pages/IncomePage";
 import MonthlyStatementPage from "./pages/MonthlyStatementPage";
 import MasterEntriesPage from "./pages/MasterEntriesPage";
 import OpeningBalancePage from "./pages/OpeningBalancePage";
+import InitialSetupPage from "./pages/InitialSetupPage";
+import FlatSetupPage from "./pages/FlatSetupPage";
+import GoLivePeriodSetupPage from "./pages/GoLivePeriodSetupPage";
+import MaintenanceFeeSetupPage from "./pages/MaintenanceFeeSetupPage";
 import { useAuth } from "./context/AuthContext";
 
 const RootRoute = () => {
@@ -44,6 +50,16 @@ function App() {
         <Route
           path="/login"
           element={<PublicOnlyRoute element={<LoginPage />} />}
+        />
+        <Route
+          path="/first-time-admin"
+          element={<PublicOnlyRoute element={<FirstTimeAdminPage />} />}
+        />
+        <Route
+          path="/first-time-admin/password"
+          element={
+            <PublicOnlyRoute element={<FirstTimeAdminPasswordPage />} />
+          }
         />
         <Route
           path="/register"
@@ -89,6 +105,22 @@ function App() {
           <Route
             path="/admin/master-entries"
             element={<MasterEntriesPage />}
+          />
+          <Route
+            path="/admin/setup"
+            element={<InitialSetupPage />}
+          />
+          <Route
+            path="/admin/setup/flats"
+            element={<FlatSetupPage />}
+          />
+          <Route
+            path="/admin/setup/period"
+            element={<GoLivePeriodSetupPage />}
+          />
+          <Route
+            path="/admin/maintenance-fees"
+            element={<MaintenanceFeeSetupPage />}
           />
           <Route
             path="/admin/opening-balance"

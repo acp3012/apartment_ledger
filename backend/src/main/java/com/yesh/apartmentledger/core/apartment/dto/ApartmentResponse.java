@@ -15,7 +15,8 @@ public record ApartmentResponse(
         String ifscCode,
         Boolean isActive,
         Short goLiveYear,
-        Short goLiveMonth
+        Short goLiveMonth,
+        Boolean isSetupCompleted
 ) {
     public static ApartmentResponse from(Apartment apartment) {
         return new ApartmentResponse(
@@ -31,6 +32,7 @@ public record ApartmentResponse(
                 apartment.getIfscCode(),
                 apartment.getIsActive(),
                 apartment.getGoLiveYear(),
-                apartment.getGoLiveMonth());
+                apartment.getGoLiveMonth(),
+                apartment.getIsSetupCompleted());
     }
 }

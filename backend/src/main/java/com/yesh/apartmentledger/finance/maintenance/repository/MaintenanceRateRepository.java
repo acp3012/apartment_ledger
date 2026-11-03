@@ -6,10 +6,13 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface MaintenanceRateRepository extends JpaRepository<MaintenanceRate, Long> {
+
+    List<MaintenanceRate> findByApartment_IdAndFlatIsNullOrderByEffectiveFromDesc(Long apartmentId);
 
     /**
      * 1. Find a rate explicitly assigned to a specific flat.

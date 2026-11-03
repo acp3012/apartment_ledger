@@ -10,6 +10,8 @@ import java.util.List;
 
 public interface ExpenseRepository extends JpaRepository<Expense, Long> {
 
+   boolean existsByApartment_Id(Long apartmentId);
+
    @Query("SELECT SUM(e.amount) FROM Expense e WHERE e.apartment.id = :apartmentId AND e.txnYear = :year AND e.txnMonth = :month")
    BigDecimal getTotalExpenseForMonth(Long apartmentId, Short year, Short month);
 

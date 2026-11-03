@@ -19,5 +19,6 @@ public interface FlatRepository extends JpaRepository<Flat, Long> {
 
     Optional<Flat> findByFlatNumberAndApartmentId(String flatNumber, Long apartmentId);
 
+    boolean existsByApartment_Id(Long apartmentId);
 
 }

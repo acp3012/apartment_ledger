@@ -14,6 +14,10 @@ const MainLayout = () => {
     location.pathname === "/dashboard/expense" ||
     location.pathname.startsWith("/dashboard/expense/");
   const isAdminRoute = location.pathname.startsWith("/admin/");
+  const isOneTimeSetupRoute =
+    (location.pathname.startsWith("/admin/setup") &&
+      location.pathname !== "/admin/setup/flats") ||
+    location.pathname === "/admin/opening-balance";
 
   const handleLogout = () => {
     logout();
@@ -33,8 +37,23 @@ const MainLayout = () => {
         : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
     }`;
 
-  if (!user) return null;
+  if (!user) {
+    return (
+      <Navigate
+        to="/login"
+        replace
+      />
+    );
+  }
   if ((isExpenseRoute || isAdminRoute) && !isAdmin) {
+    return (
+      <Navigate
+        to="/dashboard"
+        replace
+      />
+    );
+  }
+  if (isOneTimeSetupRoute && user.isSetupCompleted) {
     return (
       <Navigate
         to="/dashboard"
@@ -85,6 +104,38 @@ const MainLayout = () => {
                 className={`w-full text-left ${sidebarItemClass("/dashboard/expense")}`}>
                 <span>💸</span> Ledger Entries
               </button>
+              {!user.isSetupCompleted && (
+                <>
+                  <p className="px-4 pt-5 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                    One-Time Setup
+                  </p>
+                  <button
+                    onClick={() => navigate("/admin/setup")}
+                    className={`w-full text-left ${sidebarItemClass("/admin/setup")}`}>
+                    <span>🧰</span> One-Time Setup
+                  </button>
+                  <button
+                    onClick={() => navigate("/admin/opening-balance")}
+                    className={`w-full text-left ${sidebarItemClass("/admin/opening-balance")}`}>
+                    <span>＋</span> Opening Balance
+                  </button>
+                </>
+              )}
+              {user.isSetupCompleted && (
+                <button
+                  onClick={() => navigate("/admin/setup/flats")}
+                  className={`w-full text-left ${sidebarItemClass("/admin/setup/flats")}`}>
+                  <span>🏢</span> Flats
+                </button>
+              )}
+              <p className="px-4 pt-5 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                Maintenance
+              </p>
+              <button
+                onClick={() => navigate("/admin/maintenance-fees")}
+                className={`w-full text-left ${sidebarItemClass("/admin/maintenance-fees")}`}>
+                <span>💰</span> Maintenance Fees
+              </button>
               <p className="px-4 pt-5 text-[11px] font-bold uppercase tracking-wider text-slate-400">
                 Administration
               </p>
@@ -92,11 +143,6 @@ const MainLayout = () => {
                 onClick={() => navigate("/admin/master-entries")}
                 className={`w-full text-left ${sidebarItemClass("/admin/master-entries")}`}>
                 <span>⚙️</span> Master Entries
-              </button>
-              <button
-                onClick={() => navigate("/admin/opening-balance")}
-                className={`w-full text-left ${sidebarItemClass("/admin/opening-balance")}`}>
-                <span>＋</span> Opening Balance
               </button>
             </>
           )}
@@ -139,7 +185,7 @@ const MainLayout = () => {
                   {user.displayName}
                 </p>
                 <p className="text-[10px] text-slate-500 font-medium">
-                  Flat {user.flatNumber} {user.isAdmin ? "• Admin" : ""}
+                  {isAdmin ? "Administrator" : `Flat ${user.flatNumber}`}
                 </p>
               </div>
             </div>
@@ -181,6 +227,66 @@ const MainLayout = () => {
                   className="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50">
                   Ledger Entries
                 </button>
+                {!user.isSetupCompleted && (
+                  <>
+                    <p className="px-3 pt-3 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                      One-Time Setup
+                    </p>
+                    <button
+                      onClick={() => {
+                        navigate("/admin/setup");
+                        setMobileMenuOpen(false);
+                      }}
+                      className="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50">
+                      Setup Overview
+                    </button>
+                    <button
+                      onClick={() => {
+                        navigate("/admin/setup/flats");
+                        setMobileMenuOpen(false);
+                      }}
+                      className="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50">
+                      Create Flats
+                    </button>
+                    <button
+                      onClick={() => {
+                        navigate("/admin/setup/period");
+                        setMobileMenuOpen(false);
+                      }}
+                      className="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50">
+                      Starting Period
+                    </button>
+                    <button
+                      onClick={() => {
+                        navigate("/admin/opening-balance");
+                        setMobileMenuOpen(false);
+                      }}
+                      className="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50">
+                      Opening Balance
+                    </button>
+                  </>
+                )}
+                {user.isSetupCompleted && (
+                  <button
+                    onClick={() => {
+                      navigate("/admin/setup/flats");
+                      setMobileMenuOpen(false);
+                    }}
+                    className="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50">
+                    Flats
+                  </button>
+                )}
+                <p className="px-3 pt-3 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                  Maintenance
+                </p>
+                <button
+                  onClick={() => {
+                    navigate("/admin/maintenance-fees");
+                    setMobileMenuOpen(false);
+                  }}
+                  className="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50">
+                  Maintenance Fees
+                </button>
                 <p className="px-3 pt-3 text-[11px] font-bold uppercase tracking-wider text-slate-400">
                   Administration
                 </p>
@@ -191,14 +297,6 @@ const MainLayout = () => {
                   }}
                   className="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50">
                   Master Entries
-                </button>
-                <button
-                  onClick={() => {
-                    navigate("/admin/opening-balance");
-                    setMobileMenuOpen(false);
-                  }}
-                  className="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50">
-                  Opening Balance
                 </button>
               </>
             )}

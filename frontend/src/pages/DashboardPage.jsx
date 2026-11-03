@@ -4,7 +4,9 @@ import { ledgerService } from "../api/ledgerService";
 import { useAuth } from "../context/AuthContext";
 import { usePeriod } from "../context/PeriodContext";
 import PeriodManagementComponent from "../components/PeriodManagementComponent";
-const DashboardPage = ({
+import AdminDashboardPage from "./AdminDashboardPage";
+
+const ResidentDashboard = ({
   apartmentId: routeApartmentId,
   flatId: routeFlatId,
 }) => {
@@ -138,8 +140,13 @@ const DashboardPage = ({
             Resident Portal
           </p>
           <h2 className="text-xl md:text-2xl font-bold text-slate-800">
-            Welcome, {paymentStatus?.ownerName || user?.name || "Resident"} (
-            {paymentStatus?.flatNumber || "Flat"})
+            Welcome,{" "}
+            {paymentStatus?.ownerName ||
+              user?.ownerName ||
+              user?.displayName ||
+              user?.name ||
+              "Resident"}{" "}
+            ({paymentStatus?.flatNumber || user?.flatNumber || "Flat"})
           </h2>
         </div>
 
@@ -251,13 +258,16 @@ const DashboardPage = ({
               <span>
                 Flat:{" "}
                 <strong className="text-slate-600">
-                  {paymentStatus?.flatNumber || "---"}
+                  {paymentStatus?.flatNumber || user?.flatNumber || "---"}
                 </strong>
               </span>
               <span>
                 Owner:{" "}
                 <strong className="text-slate-600">
-                  {paymentStatus?.ownerName || "---"}
+                  {paymentStatus?.ownerName ||
+                    user?.ownerName ||
+                    user?.displayName ||
+                    "---"}
                 </strong>
               </span>
             </div>
@@ -333,5 +343,13 @@ const DashboardPage = ({
   );
 };
 
-//(ResidentDashboard is rendered as DashboardPage);
+const DashboardPage = (props) => {
+  const { user } = useAuth();
+  const isAdmin = Array.isArray(user?.roleNames)
+    ? user.roleNames.some((role) => role === "ADMIN" || role === "ROLE_ADMIN")
+    : user?.isAdmin === true;
+
+  return isAdmin ? <AdminDashboardPage /> : <ResidentDashboard {...props} />;
+};
+
 export default DashboardPage;

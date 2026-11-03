@@ -2,6 +2,12 @@ import { useEffect, useState } from "react";
 import { apartmentService } from "../api/apartmentService";
 import { ledgerService } from "../api/ledgerService";
 import { useAuth } from "../context/AuthContext";
+import {
+  SetupFormField,
+  SetupPageHeader,
+  SetupStatusMessage,
+  SetupSubmitButton,
+} from "../components/SetupFormComponents";
 
 const initialForm = {
   year: "",
@@ -160,17 +166,11 @@ const OpeningBalancePage = () => {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <header className="border-b border-slate-200 pb-5">
-        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-          Administration
-        </p>
-        <h1 className="mt-1 text-2xl font-bold text-slate-900">
-          Opening Balance
-        </h1>
-        <p className="mt-1 text-sm text-slate-600">
-          {user?.apartmentName || "Apartment"}
-        </p>
-      </header>
+      <SetupPageHeader
+        eyebrow="One-Time Setup"
+        title="Opening Balance"
+        description={user?.apartmentName || "Apartment"}
+      />
 
       {isLoadingApartment ? (
         <p className="text-sm text-slate-600">
@@ -190,26 +190,23 @@ const OpeningBalancePage = () => {
       ) : null}
 
       {errorMessage && (
-        <div
-          role="alert"
-          className="border-l-4 border-rose-500 bg-rose-50 p-4 text-sm text-rose-800">
+        <SetupStatusMessage className="border-l-4 border-rose-500">
           {errorMessage}
-        </div>
+        </SetupStatusMessage>
       )}
       {successMessage && (
-        <div
-          role="status"
-          className="border-l-4 border-emerald-500 bg-emerald-50 p-4 text-sm text-emerald-800">
+        <SetupStatusMessage
+          type="success"
+          className="border-l-4 border-emerald-500">
           {successMessage}
-        </div>
+        </SetupStatusMessage>
       )}
 
       <form
         onSubmit={handleSubmit}
         className="max-w-xl space-y-5">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <label className="space-y-1.5 text-sm font-medium text-slate-700">
-            Year
+          <SetupFormField label="Year">
             <input
               name="year"
               type="number"
@@ -221,9 +218,8 @@ const OpeningBalancePage = () => {
               onChange={handleChange}
               className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
             />
-          </label>
-          <label className="space-y-1.5 text-sm font-medium text-slate-700">
-            Month
+          </SetupFormField>
+          <SetupFormField label="Month">
             <select
               name="month"
               required
@@ -248,7 +244,7 @@ const OpeningBalancePage = () => {
                 ),
               )}
             </select>
-          </label>
+          </SetupFormField>
         </div>
 
         {[
@@ -256,10 +252,9 @@ const OpeningBalancePage = () => {
           ["income", "Income"],
           ["expense", "Expense"],
         ].map(([name, label]) => (
-          <label
+          <SetupFormField
             key={name}
-            className="block space-y-1.5 text-sm font-medium text-slate-700">
-            {label}
+            label={label}>
             <input
               name={name}
               type="number"
@@ -269,17 +264,14 @@ const OpeningBalancePage = () => {
               onChange={handleChange}
               className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
             />
-          </label>
+          </SetupFormField>
         ))}
 
-        <button
-          type="submit"
-          disabled={
-            isSubmitting || !Number.isFinite(apartmentId) || apartmentId <= 0
-          }
-          className="rounded-md bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60">
-          {isSubmitting ? "Saving..." : "Save Opening Balance"}
-        </button>
+        <SetupSubmitButton
+          isSubmitting={isSubmitting}
+          disabled={!Number.isFinite(apartmentId) || apartmentId <= 0}>
+          Save Opening Balance
+        </SetupSubmitButton>
       </form>
     </div>
   );

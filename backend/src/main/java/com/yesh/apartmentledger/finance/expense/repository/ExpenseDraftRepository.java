@@ -7,6 +7,8 @@ import java.util.Optional;
 
 public interface ExpenseDraftRepository extends JpaRepository<ExpenseDraft, Long> {
 
+   boolean existsByApartment_Id(Long apartmentId);
+
    // Notice how we traverse the relationship: ApprovalStatus_StatusName
     List<ExpenseDraft> findByApartmentIdAndApprovalStatus_StatusName(Long apartmentId, String statusName);
 

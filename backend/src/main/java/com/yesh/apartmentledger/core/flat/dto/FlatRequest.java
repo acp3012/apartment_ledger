@@ -4,12 +4,12 @@ import java.math.BigDecimal;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public record FlatRequest(
         @Size (max = 10, message = "Flat number cannot exceed 10 characters")
         String flatNumber,
-        @Size (max = 10, message = "Floor number cannot exceed 10 characters")
         Short floorNumber,
         
         @NotBlank (message = "Owner name cannot be blank")
@@ -17,7 +17,7 @@ public record FlatRequest(
         String ownerName,
         
         @NotBlank (message = "Owner mobile number cannot be blank")
-        @Size(min = 10, max = 20, message = "Owner mobile number must be between 10 and 20 characters")
+        @Pattern(regexp = "[0-9]{10}", message = "Owner mobile number must contain exactly 10 digits")
         String ownerMobileNumber,
         @Email (message = "Owner email must be a valid email address")
         String ownerEmail,

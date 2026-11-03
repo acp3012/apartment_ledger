@@ -101,6 +101,13 @@ const LoginPage = () => {
             Register here
           </Link>
         </div>
+        <div className="mt-3 text-center text-sm">
+          <Link
+            to="/first-time-admin"
+            className="font-medium text-blue-600 hover:text-blue-700 hover:underline">
+            First-time administrator? Set your password
+          </Link>
+        </div>
       </div>
     </div>
   );

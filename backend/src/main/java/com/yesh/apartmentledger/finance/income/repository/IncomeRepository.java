@@ -13,6 +13,8 @@ import java.util.List;
 @Repository
 public interface IncomeRepository extends JpaRepository<Income, Long> {
 
+    boolean existsByApartment_Id(Long apartmentId);
+
     @Query("SELECT i FROM Income i " +
             "JOIN FETCH i.apartment a " +
             "LEFT JOIN FETCH i.flat f " +

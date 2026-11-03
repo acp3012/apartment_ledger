@@ -12,6 +12,8 @@ import java.util.Optional;
 @Repository
 public interface IncomeDraftRepository extends JpaRepository<IncomeDraft, Long> {
 
+    boolean existsByApartment_Id(Long apartmentId);
+
     // Fetch a draft securely by ensuring it belongs to the current tenant
     Optional<IncomeDraft> findByIdAndApartmentId(Long id, Long apartmentId);
     List<IncomeDraft> findByApartmentIdAndApprovalStatusId(Long apartmentId, Long statusId);

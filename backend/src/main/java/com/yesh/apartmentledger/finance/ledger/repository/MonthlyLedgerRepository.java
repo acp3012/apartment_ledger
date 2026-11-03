@@ -16,4 +16,6 @@ public interface MonthlyLedgerRepository extends JpaRepository<MonthlyLedger, Lo
     //  Check if a specific month is explicitly CLOSED
     boolean existsByApartmentIdAndYearAndMonth(Long apartmentId, Short year, Short month);
 
+    boolean existsByApartment_Id(Long apartmentId);
+
 }

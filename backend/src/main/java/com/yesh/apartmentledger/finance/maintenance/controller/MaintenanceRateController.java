@@ -13,6 +13,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.List;
 
 
 @RestController
@@ -24,7 +25,12 @@ public class  MaintenanceRateController {
 
     private final MaintenanceRateService rateService;
 
-
+    @GetMapping
+    @Operation(summary = "List apartment-wide maintenance fee schedules.")
+    public ResponseEntity<List<MaintenanceRateResponse>> getApartmentMaintenanceRates(
+            @PathVariable Long apartmentId) {
+        return ResponseEntity.ok(rateService.getApartmentMaintenanceRates(apartmentId));
+    }
 
     @GetMapping("/current")
     @Operation(summary = "Fetch maintenance fee for a apartment and or flatid for a given period.")

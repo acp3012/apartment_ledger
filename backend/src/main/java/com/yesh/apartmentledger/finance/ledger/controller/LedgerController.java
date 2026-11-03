@@ -56,7 +56,7 @@ public class LedgerController {
                 .findByApartmentAndOptionalPeriod(apartmentId, year,month));
     }
     // Ledger Summary
-        @Operation(summary = "Get ledger summary",
+    @Operation(summary = "Get ledger summary",
             description = "Returns income, expense, and balance totals for an apartment's specified ledger month.")
     @GetMapping("/summary")
     public ResponseEntity<LedgerSummaryResponse>  getLedgerSummary(
@@ -101,7 +101,7 @@ public class LedgerController {
 
     }
 
-        @Operation(summary = "Close a monthly ledger period",
+    @Operation(summary = "Close a monthly ledger period",
             description = "Closes the specified apartment ledger period and returns a confirmation message.")
     @PreAuthorize("hasRole('ADMIN') and @apartmentAuthorization.canAccess(#p0)")
     @PostMapping("/close")

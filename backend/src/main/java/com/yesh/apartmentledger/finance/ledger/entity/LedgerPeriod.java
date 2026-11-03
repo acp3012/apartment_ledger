@@ -20,7 +20,7 @@ public class LedgerPeriod  extends BaseAuditEntity {
     @Column(name = "active_year", nullable = false)
     private Short activeYear;
 
-    @Column(name = "month_name", nullable = false, updatable = false)
+    @Column(name = "month_name", nullable = false, insertable = false, updatable = false)
     private String monthName;
 
 

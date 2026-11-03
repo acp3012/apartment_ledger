@@ -19,6 +19,7 @@ import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Service
 @AllArgsConstructor
@@ -28,6 +29,16 @@ public class MaintenanceRateService {
     private final ApartmentRepository apartmentRepository;
     private final FlatRepository flatRepository;
     private final CurrentUserService currentUserService;
+
+    @Transactional
+    public List<MaintenanceRateResponse> getApartmentMaintenanceRates(Long apartmentId) {
+        currentUserService.requireApartmentAccess(apartmentId);
+        return maintenanceRateRepository
+                .findByApartment_IdAndFlatIsNullOrderByEffectiveFromDesc(apartmentId)
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
 
     // Create a new maintenance fee for an apartment or a specific flat within an apartment. If flatId is provided, it will be a flat-specific rate; otherwise, it will be an apartment-wide rate.
     @Transactional
@@ -42,6 +53,14 @@ public class MaintenanceRateService {
                     .orElseThrow(() -> new ResourceNotFoundException("Flat not found with id: " + flatId)); 
             
         } 
+        // validate if effective period are full month
+        if(!request.isEffectiveDateRangeValid()){
+            throw new BadRequestException("Effective from date must be on or before effective to date");
+        }
+
+        if(!request.isMonthlyBoundaryValid()){
+            throw new BadRequestException("Effective from date must be the first day of a month and effective to date must be the last day of a month");
+        }
 
         if (hasOverlappingRate(apartmentId, request.effectiveFrom(), request.effectiveTo())) {
             throw new BadRequestException("A maintenance rate already exists for this apartment within the selected effective date range.");
@@ -50,16 +69,7 @@ public class MaintenanceRateService {
 
         maintenanceRate = maintenanceRateRepository.save(maintenanceRate);
 
-        return new MaintenanceRateResponse(
-                maintenanceRate.getId(),
-                apartmentId,
-                flatId,
-                maintenanceRate.getEffectiveFrom(),
-                maintenanceRate.getEffectiveTo(),
-                maintenanceRate.getFee(),
-                maintenanceRate.getCreatedDate(),
-                maintenanceRate.getUpdatedDate()
-        );
+        return mapToResponse(maintenanceRate);
     }
 
 
@@ -98,6 +108,20 @@ public class MaintenanceRateService {
                 || maintenanceRateRepository
                 .findDefaultRateForApartment(apartmentId, effectiveTo).isPresent();
     }
+
+    private MaintenanceRateResponse mapToResponse(MaintenanceRate rate) {
+        return new MaintenanceRateResponse(
+                rate.getId(),
+                rate.getApartment().getId(),
+                rate.getFlat() != null ? rate.getFlat().getId() : null,
+                rate.getEffectiveFrom(),
+                rate.getEffectiveTo(),
+                rate.getFee(),
+                rate.getCreatedDate(),
+                rate.getUpdatedDate()
+        );
+    }
+
     private @NonNull MaintenanceRate getMaintenanceRate(MaintenanceRateRequest request, Flat flat, Apartment apartment) {
         AppUser createdByUser = currentUserService.getCurrentUser();
         MaintenanceRate maintenanceRate = new MaintenanceRate();

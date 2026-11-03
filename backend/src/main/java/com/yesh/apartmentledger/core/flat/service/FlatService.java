@@ -11,6 +11,7 @@ import com.yesh.apartmentledger.core.flat.dto.FlatResponse;
 import com.yesh.apartmentledger.core.flat.repository.FlatRepository;
 import com.yesh.apartmentledger.exception.ResourceAlreadyExistsException;
 import com.yesh.apartmentledger.exception.ResourceNotFoundException;
+import com.yesh.apartmentledger.exception.BadRequestException;
 
 import com.yesh.apartmentledger.core.flat.entity.Flat;
 import jakarta.transaction.Transactional;
@@ -33,9 +34,7 @@ public class FlatService {
 
     @Transactional
     public FlatResponse createFlat(Long apartmentId, FlatRequest flatRequest) {
-        // Validate that the apartment exists        
-        var apartment = apartmentRepository.findById(apartmentId)
-                .orElseThrow(() -> new ResourceNotFoundException("Apartment not found"));
+        var apartment = getApartmentForSetup(apartmentId);
         
         validateFlatRequest(apartmentId, flatRequest);
         
@@ -44,6 +43,21 @@ public class FlatService {
         flatRepository.save(newFlat);
         
         return mapToFlatResponse(newFlat);
+    }
+
+    @Transactional
+    public FlatResponse updateFlat(Long apartmentId, Long flatId, FlatRequest flatRequest) {
+        var flat = flatRepository.findByIdAndApartmentId(flatId, apartmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Flat not found"));
+        validateFlatRequest(apartmentId, flatRequest, flatId);
+
+        flat.setFlatNumber(flatRequest.flatNumber());
+        flat.setFloorNumber(flatRequest.floorNumber());
+        flat.setOwnerName(flatRequest.ownerName());
+        flat.setOwnerMobile(flatRequest.ownerMobileNumber());
+        flat.setOwnerEmail(flatRequest.ownerEmail());
+
+        return mapToFlatResponse(flatRepository.save(flat));
     }
     
     //===================================
@@ -82,5 +96,28 @@ public class FlatService {
                 .ifPresent(flat -> {
                     throw new ResourceAlreadyExistsException("Owner mobile number already exists for this apartment");
                 });
+    }
+
+    private void validateFlatRequest(Long apartmentId, FlatRequest flatRequest, Long flatId) {
+        flatRepository.findByFlatNumberAndApartmentId(flatRequest.flatNumber(), apartmentId)
+                .filter(flat -> !flat.getId().equals(flatId))
+                .ifPresent(flat -> {
+                    throw new ResourceAlreadyExistsException("Flat number already exists for this apartment");
+                });
+        flatRepository.findByOwnerMobileAndApartmentId(flatRequest.ownerMobileNumber(), apartmentId)
+                .filter(flat -> !flat.getId().equals(flatId))
+                .ifPresent(flat -> {
+                    throw new ResourceAlreadyExistsException("Owner mobile number already exists for this apartment");
+                });
+    }
+
+    private Apartment getApartmentForSetup(Long apartmentId) {
+        var apartment = apartmentRepository.findById(apartmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Apartment not found"));
+        if (Boolean.TRUE.equals(apartment.getIsSetupCompleted())) {
+            throw new BadRequestException(
+                    "The one-time setup has been completed and flat creation is locked.");
+        }
+        return apartment;
     }
 }
