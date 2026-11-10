@@ -28,11 +28,7 @@ export const SetupStatusMessage = ({
   </div>
 );
 
-export const SetupFormField = ({
-  label,
-  children,
-  className = "",
-}) => (
+export const SetupFormField = ({ label, children, className = "" }) => (
   <label className={`${fieldClassName} ${className}`}>
     {label}
     {children}

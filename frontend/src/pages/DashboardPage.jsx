@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { ledgerService } from "../api/ledgerService";
 import { useAuth } from "../context/AuthContext";
 import { usePeriod } from "../context/PeriodContext";
-import PeriodManagementComponent from "../components/PeriodManagementComponent";
 import AdminDashboardPage from "./AdminDashboardPage";
 
 const ResidentDashboard = ({
@@ -24,6 +23,17 @@ const ResidentDashboard = ({
   const [notices, setNotices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+
+  const paymentReferences = Array.isArray(paymentStatus?.paymentReferenceList)
+    ? paymentStatus.paymentReferenceList
+    : [];
+  const isPaid = paymentStatus?.status === "PAID";
+  const isDue = paymentStatus?.status === "DUE";
+  const adjustmentLabel = isPaid
+    ? "Advance at period close"
+    : isDue
+      ? "Due at period close"
+      : "Adjustment at period close";
 
   // Step A: Fetch dashboard data for the shared active period
   useEffect(() => {
@@ -129,8 +139,6 @@ const ResidentDashboard = ({
     }
   };
 
-  const isPaid = paymentStatus?.status === "PAID";
-
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       {/* HEADER & PERIOD SELECTOR */}
@@ -219,40 +227,89 @@ const ResidentDashboard = ({
                   Loading active period status...
                 </div>
               ) : (
-                <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
                     <p className="text-xs text-slate-500 font-medium">
-                      Amount {isPaid ? "Paid" : "Due"}
+                      Monthly Fee
                     </p>
-                    <p
-                      className={`text-2xl font-bold mt-1 ${isPaid ? "text-emerald-700" : "text-amber-700"}`}>
-                      ₹
-                      {Number(
-                        isPaid
-                          ? (paymentStatus?.amountPaid ?? 0)
-                          : (paymentStatus?.arrearsAmount ?? 0),
-                      ).toLocaleString("en-IN")}
+                    <p className="text-2xl font-bold mt-1 text-slate-800">
+                      ₹{Number(paymentStatus?.monthlyFee ?? 0).toLocaleString("en-IN")}
                     </p>
                   </div>
 
                   <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
                     <p className="text-xs text-slate-500 font-medium">
-                      Payment Record
+                      Total Paid
                     </p>
-                    <p className="text-sm font-semibold text-slate-800 mt-1">
-                      {isPaid
-                        ? `${paymentStatus?.paymentModeName || ""} - ${paymentStatus?.referenceNumber || ""}`
-                        : "Pending Payment"}
+                    <p className="text-2xl font-bold mt-1 text-emerald-700">
+                      ₹{Number(paymentStatus?.totalAmountPaid ?? 0).toLocaleString("en-IN")}
                     </p>
-                    {isPaid && paymentStatus?.lastPaymentDate && (
-                      <p className="text-xs text-slate-400 mt-0.5">
-                        Paid on: {paymentStatus.lastPaymentDate}
-                      </p>
-                    )}
+                  </div>
+
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                    <p className="text-xs text-slate-500 font-medium">
+                      {adjustmentLabel}
+                    </p>
+                    <p
+                      className={`text-2xl font-bold mt-1 ${isPaid ? "text-blue-700" : "text-amber-700"}`}>
+                      ₹{Number(paymentStatus?.adjustmentAmount ?? 0).toLocaleString("en-IN")}
+                    </p>
                   </div>
                 </div>
               )}
             </div>
+
+            {!loading && (
+              <div className="mt-6 border-t border-slate-100 pt-5">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-sm font-bold text-slate-800">
+                    Payment history
+                  </h4>
+                  <span className="text-xs text-slate-400">
+                    {paymentReferences.length}{" "}
+                    {paymentReferences.length === 1 ? "payment" : "payments"}
+                  </span>
+                </div>
+                {paymentReferences.length === 0 ? (
+                  <p className="text-sm text-slate-500 bg-slate-50 rounded-xl p-4">
+                    No payments recorded for this period.
+                  </p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm">
+                      <thead>
+                        <tr className="text-xs uppercase tracking-wide text-slate-400 border-b border-slate-100">
+                          <th className="py-2 pr-4 font-semibold">Date</th>
+                          <th className="py-2 pr-4 font-semibold">Mode</th>
+                          <th className="py-2 pr-4 font-semibold">Reference</th>
+                          <th className="py-2 text-right font-semibold">Amount</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {paymentReferences.map((payment) => (
+                          <tr
+                            key={payment.paymentId}
+                            className="border-b border-slate-50 last:border-0">
+                            <td className="py-3 pr-4 whitespace-nowrap text-slate-600">
+                              {payment.transactionDate || "—"}
+                            </td>
+                            <td className="py-3 pr-4 text-slate-600">
+                              {payment.paymentMode || "—"}
+                            </td>
+                            <td className="py-3 pr-4 text-slate-500">
+                              {payment.referenceNumber || "—"}
+                            </td>
+                            <td className="py-3 text-right whitespace-nowrap font-semibold text-slate-800">
+                              ₹{Number(payment.amount ?? 0).toLocaleString("en-IN")}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="mt-6 pt-4 border-t border-slate-100 flex justify-between items-center text-xs text-slate-400">
               <span>
@@ -293,11 +350,8 @@ const ResidentDashboard = ({
             </button>
           </div>
         </div>
-        {/* RIGHT COLUMN: NOTICE BOARD & PERIOD MANAGEMENT */}
+        {/* RIGHT COLUMN: NOTICE BOARD */}
         <div className="space-y-6">
-          {/* 2. ADD THE PERIOD MANAGEMENT COMPONENT HERE */}
-          <PeriodManagementComponent />
-
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col">
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-bold text-slate-800 text-sm uppercase tracking-wider">

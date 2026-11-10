@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import PeriodManagementComponent from "../components/PeriodManagementComponent";
 
 const setupActions = [
   {
@@ -131,6 +132,12 @@ const AdminDashboardPage = () => {
           ))}
         </div>
       </section>
+
+      {isSetupCompleted && (
+        <section>
+          <PeriodManagementComponent />
+        </section>
+      )}
     </div>
   );
 };
