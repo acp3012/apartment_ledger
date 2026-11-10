@@ -30,6 +30,25 @@ public interface IncomeRepository extends JpaRepository<Income, Long> {
             @Param("year") Short year,
             @Param("month") Short month
     );
+
+    @Query("SELECT i FROM Income i " +
+            "JOIN FETCH i.apartment a " +
+            "LEFT JOIN FETCH i.flat f " +
+            "JOIN FETCH i.ledgerCategory lc " +
+            "JOIN FETCH i.paymentMode pm " +
+            "JOIN FETCH i.createdBy cb " +
+            "JOIN FETCH i.approvedBy ab " +
+            "WHERE i.apartment.id = :apartmentId " +
+            "AND i.flat.id = :flatId " +
+            "AND (:year IS NULL OR i.year = :year) " +
+            "AND (:month IS NULL OR i.month = :month)")
+    List<Income> findByApartmentFlatYearMonth(
+            @Param("apartmentId") Long apartmentId,
+            @Param("flatId") Long flatId,
+            @Param("year") Short year,
+            @Param("month") Short month
+    );
+
     // get Total income
     @Query("SELECT COALESCE(SUM(i.amount),0) FROM Income i " +
             "WHERE i.apartment.id = :apartmentId " +

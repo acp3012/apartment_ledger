@@ -90,7 +90,8 @@ public class MaintenanceRateService {
         return new MaintenanceRateResponse(
                 applicableRate.getId(),
                 applicableRate.getApartment().getId(),
-                applicableRate.getFlat() != null ? applicableRate.getFlat().getId() : null,
+                flatId,
+                //applicableRate.getFlat() != null ? applicableRate.getFlat().getId() : null,
                 applicableRate.getEffectiveFrom(),
                 applicableRate.getEffectiveTo(),
                 applicableRate.getFee(),

@@ -54,8 +54,8 @@ public class FlatController {
     public ResponseEntity<FlatPaymentStatusResponse> getFlatPaymentStatus(
             @PathVariable Long apartmentId,
             @PathVariable Long flatId,
-            @RequestParam(required = false) Short year,
-            @ValidMonth @RequestParam(required = false) Short month
+            @RequestParam Short year,
+            @ValidMonth @RequestParam Short month
     ) {
 
        return ResponseEntity.ok(incomeService.getFlatMaintenancePaymentStatus(apartmentId,flatId,year,month));

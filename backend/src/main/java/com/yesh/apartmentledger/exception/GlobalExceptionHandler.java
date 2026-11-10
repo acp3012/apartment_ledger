@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import jakarta.validation.ConstraintViolationException;
 
+import java.util.Objects;
+
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -38,7 +40,14 @@ public class GlobalExceptionHandler {
         return formatErrorResponse("CONFLICT",ex.getMessage(),HttpStatus.CONFLICT);
     }
 
-    // 4. Global Fallback for anything else (500 Internal Server Error)
+    //4. Unauthorized exception
+    @ExceptionHandler(UnAuthorizedException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ResponseEntity<ApiErrorResponse> handleUnAuthorizedException(UnAuthorizedException ex) {
+        return formatErrorResponse("UNAUTHORIZED",ex.getMessage(), HttpStatus.UNAUTHORIZED);
+    }
+
+    //5. Global Fallback for anything else (500 Internal Server Error)
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ResponseEntity<ApiErrorResponse> handleGlobalException(Exception ex) {
@@ -60,7 +69,7 @@ public class GlobalExceptionHandler {
         @SuppressWarnings("null")
         String msg = ex.getAllErrors().stream()
             .map(MessageSourceResolvable::getDefaultMessage)
-            .filter(message -> message != null)
+            .filter(Objects::nonNull)
             .findFirst()
             .orElse("Invalid request parameter");
         return formatErrorResponse("BAD_REQUEST", msg, HttpStatus.BAD_REQUEST);

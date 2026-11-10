@@ -4,12 +4,11 @@ import com.yesh.apartmentledger.finance.maintenance.entity.MaintenanceRate;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-@Repository
+
 public interface MaintenanceRateRepository extends JpaRepository<MaintenanceRate, Long> {
 
     List<MaintenanceRate> findByApartment_IdAndFlatIsNullOrderByEffectiveFromDesc(Long apartmentId);

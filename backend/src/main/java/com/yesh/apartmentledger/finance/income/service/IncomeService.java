@@ -2,19 +2,24 @@ package com.yesh.apartmentledger.finance.income.service;
 
 import com.yesh.apartmentledger.core.enums.PaymentStatusEnum;
 import com.yesh.apartmentledger.core.flat.dto.FlatPaymentStatusResponse;
+import com.yesh.apartmentledger.core.flat.dto.PaymentReference;
+import com.yesh.apartmentledger.core.flat.entity.Flat;
 import com.yesh.apartmentledger.core.flat.repository.FlatRepository;
 import com.yesh.apartmentledger.exception.ResourceNotFoundException;
 import com.yesh.apartmentledger.finance.income.dto.IncomeResponse;
 import com.yesh.apartmentledger.finance.income.dto.PaymentModeIncomeSummary;
 import com.yesh.apartmentledger.finance.income.entity.Income;
 import com.yesh.apartmentledger.finance.income.repository.IncomeRepository;
+import com.yesh.apartmentledger.finance.maintenance.service.MaintenanceRateService;
 import com.yesh.apartmentledger.security.service.CurrentUserService;
 import lombok.AllArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
-
+@Log4j2
 @Service
 @AllArgsConstructor
 public class IncomeService {
@@ -22,7 +27,7 @@ public class IncomeService {
     private final IncomeRepository incomeRepository;
     private final FlatRepository flatRepository;
     private final CurrentUserService currentUserService;
-
+    private final MaintenanceRateService maintenanceRateService;
     /**
      * Fetch all amount received (income) for a specific period.
      * @param apartmentId The apartment id
@@ -47,28 +52,59 @@ public class IncomeService {
      */
     public FlatPaymentStatusResponse getFlatMaintenancePaymentStatus(Long apartmentId, Long flatId, Short year, Short month){
         currentUserService.requireApartmentAccess(apartmentId);
-        var incomes =  incomeRepository.findByApartmentYearMonth(apartmentId,year,month);
-        var status = PaymentStatusEnum.DUE.name();
 
-        var flat = flatRepository.findByIdAndApartmentId(flatId, apartmentId)
-            .orElseThrow(() -> new ResourceNotFoundException("Flat not found"));
-        var flatIncome = incomes.stream().filter(i -> i.getFlat() != null
-                && i.getFlat().getId().equals(flatId)
-                        && i.getLedgerCategory().getIsFlatMaintenance().equals(true))
-                .findFirst().orElse(null);
+        var targetDate = LocalDate.of(year,month,1);
 
-        if (flatIncome != null)
-        {
+        Flat flat = flatRepository.findByIdAndApartmentId(flatId,apartmentId).orElseThrow(() -> new ResourceNotFoundException("Flat not found."));
+
+        var incomes = incomeRepository.findByApartmentFlatYearMonth(apartmentId, flatId, year, month);
+
+        BigDecimal monthlyFee = maintenanceRateService.getMaintenanceFee(apartmentId, flatId, targetDate).fee();
+
+        log.info("Maintenance rate for flat {} on {} is {}",flatId,targetDate,monthlyFee);
+
+        List<Income> maintenanceIncomes = incomes.stream()
+                .filter(income -> Boolean.TRUE.equals(income.getLedgerCategory().getIsFlatMaintenance()))
+                .toList();
+
+        List<PaymentReference> paymentReferences = maintenanceIncomes.stream()
+                .map(income-> new PaymentReference(
+                        income.getId(),
+                        income.getTransactionDate(),
+                        income.getPaymentMode().getPaymentModeName(),
+                        income.getReferenceNo(),
+                        income.getRemarks(),
+                        income.getAmount()
+                        )).toList();
+
+        BigDecimal paidAmount = maintenanceIncomes.stream()
+                .map(Income::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        String status;
+        BigDecimal adjustAmount = paidAmount.subtract(monthlyFee);
+
+        if(adjustAmount.compareTo(BigDecimal.ZERO) < 0){
+            status = PaymentStatusEnum.DUE.name();
+            adjustAmount = adjustAmount.abs();
+        }
+        else {
             status = PaymentStatusEnum.PAID.name();
         }
-
-        return  new FlatPaymentStatusResponse(flat.getFlatNumber(), flat.getOwnerName(),year,month,status,
-                (flatIncome == null ? BigDecimal.ZERO : flatIncome.getAmount()),
-                (flatIncome == null ? null : flatIncome.getTransactionDate()),
-                (flatIncome == null ? null : flatIncome.getPaymentMode().getPaymentModeName()),
-                (flatIncome == null ? null : flatIncome.getReferenceNo()),
-                (flatIncome == null? null : BigDecimal.ZERO ));
-
+       
+        return new FlatPaymentStatusResponse(
+                apartmentId,
+                flat.getId(),
+                flat.getFlatNumber(),
+                flat.getOwnerName(),
+                year,
+                month,
+                monthlyFee,
+                paidAmount,
+                status,
+                adjustAmount,
+                paymentReferences
+        );
     }
 
     /**

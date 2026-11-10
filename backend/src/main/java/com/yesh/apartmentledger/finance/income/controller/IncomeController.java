@@ -28,6 +28,7 @@ public class IncomeController {
     private final IncomeService incomeService;
 
     // 1. CREATE: Used by the React Maker Form you just built
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/drafts")
     public ResponseEntity<String> createDraft(
             @PathVariable Long apartmentId,
@@ -36,6 +37,8 @@ public class IncomeController {
         return ResponseEntity.status(HttpStatus.CREATED).body("Income draft saved successfully.");
     }
     // Update draft income
+     @PreAuthorize("hasRole('ADMIN')")
+
     @PutMapping("/drafts/{draftId}")
     public ResponseEntity<Void> updateIncomeDraft(
             @PathVariable Long apartmentId,
@@ -47,8 +50,7 @@ public class IncomeController {
 
         return ResponseEntity.ok().build();
     }
-    // 2. READ: Get ALL drafts based on status for the grid/Checker
-   // "/api/v1/apartments/{apartmentId}/incomes/drafts?approvalStatus=PENDING&year=2026 &moth=8
+   
     @GetMapping("/drafts")
     public ResponseEntity<List<IncomeDraftResponse>> getAllDrafts(
             @PathVariable Long apartmentId,

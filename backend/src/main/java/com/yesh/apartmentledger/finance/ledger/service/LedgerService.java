@@ -5,10 +5,12 @@ import com.yesh.apartmentledger.core.apartment.repository.ApartmentRepository;
 import com.yesh.apartmentledger.core.enums.ApprovalStatusEnum;
 import com.yesh.apartmentledger.exception.BadRequestException;
 import com.yesh.apartmentledger.exception.ResourceNotFoundException;
+
 import com.yesh.apartmentledger.finance.expense.repository.ExpenseDraftRepository;
 import com.yesh.apartmentledger.finance.expense.repository.ExpenseRepository;
 import com.yesh.apartmentledger.finance.income.repository.IncomeDraftRepository;
 import com.yesh.apartmentledger.finance.income.repository.IncomeRepository;
+import com.yesh.apartmentledger.finance.income.service.IncomeDraftService;
 import com.yesh.apartmentledger.finance.ledger.dto.LedgerPeriodResponse;
 import com.yesh.apartmentledger.finance.ledger.dto.LedgerSummaryResponse;
 import com.yesh.apartmentledger.finance.ledger.dto.MonthEndCloseResponse;
@@ -25,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
+
 import java.util.Optional;
 // ... imports
 
@@ -40,9 +43,13 @@ public class LedgerService {
     private final ApartmentRepository apartmentRepository;
     private final ExpenseDraftRepository expenseDraftRepository;
     private final IncomeDraftRepository incomeDraftRepository;
-
+    private final IncomeDraftService incomeDraftService;
+    //private final CurrentUserService currentUserService;
     // Current active period of the ledger
     public LedgerPeriodResponse getActiveLedgerPeriod(Long apartmentId){
+
+
+
         var ledgerPeriod = ledgerPeriodRepository.findById(apartmentId)
                 .orElseThrow(()-> new ResourceNotFoundException("Apartment id not found"));
         return new LedgerPeriodResponse(apartmentId,
@@ -58,15 +65,15 @@ public class LedgerService {
      * Returns total income and total expense for an apartment.
      * Year and month are optional; pass null to include all.
      *
-     * @param apartmentId apartment to summarise
+     * @param apartmentId apartment to summarize
      * @param year        filter by year, or null for all years
      * @param month       filter by month (1-12), or null for all months
      * @return summary with totalIncome and totalExpense (zero if no transactions)
      */
      public LedgerSummaryResponse getLedgerSummary(Long apartmentId, Short year, Short month) {
+
         // Get Previous month closing balance , current month's OB
         BigDecimal openingBalance = getOpeningBalance(apartmentId, year, month);
-
 
         BigDecimal totalIncome = Optional.ofNullable(incomeRepository.getTotalIncomeForMonth(apartmentId, year, month))
                 .orElse(BigDecimal.ZERO);
@@ -133,7 +140,7 @@ public class LedgerService {
     // ==========================================
     @Transactional
     public String closeActiveAccountPeriod(Long apartmentId, Short year, Short month){
-        // 1. Check ledger_period for current active month & year
+         // 1. Check ledger_period for current active month & year
         var period =  getActiveLedgerPeriod(apartmentId);
 
          if (!period.apartmentId().equals(apartmentId)
@@ -187,6 +194,8 @@ public class LedgerService {
         currentPeriod.setActiveMonth((short)nextYearMonth.getMonthValue() );
         currentPeriod.setUpdatedDate(LocalDateTime.now());
 
+        // Remove approved drafts from draft table after closing the month
+        incomeDraftService.deleteApprovedDrafts(apartmentId, year, month);       
         // We do NOT set closingBalance, the database does it!
 
         monthlyLedgerRepository.save(ledger);
@@ -220,9 +229,6 @@ public class LedgerService {
         }
         var openingYearMonth = YearMonth.of(apartment.getGoLiveYear(), apartment.getGoLiveMonth());
         var requestYearMonth = YearMonth.of(request.year(), request.month());
-        log.info("apartment live period " + openingYearMonth);
-        log.info("requested period " + requestYearMonth);
-
 
         // Throws an error if the requested period is equal to or ahead of the go-live period
         if (!requestYearMonth.isBefore(openingYearMonth)) {

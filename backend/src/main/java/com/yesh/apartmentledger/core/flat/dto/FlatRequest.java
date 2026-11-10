@@ -24,5 +24,4 @@ public record FlatRequest(
         //optional fields
         BigDecimal maintenanceFee
 
-) {
-}
+) {}

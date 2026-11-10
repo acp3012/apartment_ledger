@@ -44,7 +44,7 @@ public class LedgerController {
     //==============================================
     // Get income and expense summary for a period
     //================================================
-        @Operation(summary = "Get ledger details",
+    @Operation(summary = "Get ledger details",
             description = "Returns the ledger entries for an apartment in the specified year and month.")
     @GetMapping("/details")
     public ResponseEntity<List<LedgerDetail>>  getLedgerDetails(

@@ -9,6 +9,7 @@ import com.yesh.apartmentledger.core.flat.entity.Flat;
 import com.yesh.apartmentledger.core.flat.repository.FlatRepository;
 import com.yesh.apartmentledger.core.user.entity.AppUser;
 import com.yesh.apartmentledger.exception.BadRequestException;
+import com.yesh.apartmentledger.exception.ResourceAlreadyExistsException;
 import com.yesh.apartmentledger.exception.ResourceNotFoundException;
 import com.yesh.apartmentledger.finance.income.dto.*;
 import com.yesh.apartmentledger.finance.income.entity.Income;
@@ -51,6 +52,7 @@ public class IncomeDraftService {
 
     @Transactional
     public void createDraft(Long apartmentId, IncomeDraftRequest request) {
+
         currentUserService.requireApartmentAccess(apartmentId);
 
         // 1. Fetch Multi-tenant context
@@ -81,6 +83,13 @@ public class IncomeDraftService {
         if (cachedPendingStatus == null) {
             throw new ResourceNotFoundException("Default approval status not found");
         }
+        // duplicate entry check
+        if(!(request.flatId() == null)){
+             if(isEntryAlreadyExists(apartmentId,request)){
+                 throw new ResourceAlreadyExistsException("Already entry found for the same flat,category and transaction date.");
+             }
+        }
+
         //var statusId = ApprovalStatusEnum.PENDING.getValue();
         // 5. Build the Draft Entity
         IncomeDraft draft = new IncomeDraft();
@@ -110,6 +119,8 @@ public class IncomeDraftService {
         // 7. Save to PostgreSQL
         incomeDraftRepository.save(draft);
     }
+
+
     //==============================================================
     // UPDATE DRAFT BY ID
     //=============================================================
@@ -233,7 +244,23 @@ public class IncomeDraftService {
         incomeDraftRepository.saveAll(draftsToUpdate);
         return request.draftIds().size() + " draft(s) successfully approved and posted to the ledger.";
     }
+    @Transactional 
+    public void deleteApprovedDrafts( Long apartmentId, Short year, Short month) {
+        
+        List<Long> approvedDraftIdsList = getDraftsByApprovalStatusYearAndMonth(apartmentId, ApprovalStatusEnum.APPROVED.name(), year, month)
+        .stream().map(x-> x.draftId())
+        .toList();
+        
+        List<IncomeDraft> approvedDrafts = new ArrayList<>();
+        for (Long draftId : approvedDraftIdsList) {
+            IncomeDraft draft = incomeDraftRepository.findById(draftId)
+                .orElseThrow(() -> new ResourceNotFoundException("Draft not found: " + draftId));
 
+           
+            approvedDrafts.add(draft);
+        }
+        incomeDraftRepository.deleteAll(approvedDrafts);
+    }
 
     // ====================================================================
     // Private methods
@@ -273,4 +300,17 @@ public class IncomeDraftService {
                 entity.getLedgerCategory().getId()
         );
     }
+
+    private boolean isEntryAlreadyExists(Long apartmentId,IncomeDraftRequest request) {
+        return incomeDraftRepository.
+                existsByApartment_IdAndFlat_IdAndTransactionDateAndLedgerCategory_Id(
+                        apartmentId,
+                        request.flatId(),
+                        request.transactionDate(),
+                        request.ledgerCategoryId()
+                );
+    }
+
+
+
 }
