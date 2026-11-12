@@ -80,7 +80,7 @@ CREATE TABLE core.app_user
 (
     user_id                BIGSERIAL,
     apartment_id           BIGINT       NOT NULL,
-    flat_id                BIGINT       NOT NULL,
+    flat_id                BIGINT       NULL,        -- for Admin 
     email                  VARCHAR(50) NOT NULL,
     password_hash          VARCHAR(255) NOT NULL,
     mobile_number          VARCHAR(20)  NOT NULL,

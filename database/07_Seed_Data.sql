@@ -46,3 +46,6 @@ values ('Monthly maintenance','CR',true,1),
 ('Statutory & legal','DR',false,14),
 ('Insurance','DR',false,15),
 ('Generator / DG','DR',false,16);
+
+
+
