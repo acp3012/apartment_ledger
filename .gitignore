@@ -13,7 +13,6 @@ backend/.project
 
 # ignore property files
 backend/src/main/resources/application-dev.properties
-backend/src/main/resources/application-prod.properties
 
 # ignore all .txt file
 backend/**/*.txt
