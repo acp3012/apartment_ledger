@@ -175,12 +175,12 @@ const MainLayout = () => {
           </div>
 
           {/* User Profile Pill & Logout */}
-          <div className="flex items-center gap-4 ml-auto">
-            <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 px-3.5 py-1.5 rounded-2xl shadow-xs">
-              <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs">
+          <div className="flex items-center gap-2 sm:gap-4 ml-auto">
+            <div className="flex items-center gap-2 sm:gap-3 bg-slate-50 border border-slate-200 px-2 sm:px-3.5 py-1.5 rounded-2xl shadow-xs">
+              <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs shrink-0">
                 {user.displayName?.charAt(0) || "U"}
               </div>
-              <div className="text-left leading-tight">
+              <div className="text-left leading-tight hidden sm:block">
                 <p className="text-xs font-bold text-slate-900">
                   {user.displayName}
                 </p>
@@ -192,7 +192,7 @@ const MainLayout = () => {
 
             <button
               onClick={handleLogout}
-              className="bg-white border border-slate-200 hover:bg-red-50 hover:border-red-200 hover:text-red-600 text-slate-600 px-3.5 py-2 rounded-xl text-xs font-semibold transition-colors shadow-xs">
+              className="bg-white border border-slate-200 hover:bg-red-50 hover:border-red-200 hover:text-red-600 text-slate-600 px-2.5 sm:px-3.5 py-2 rounded-xl text-xs font-semibold transition-colors shadow-xs shrink-0">
               Log Out
             </button>
           </div>
@@ -304,7 +304,7 @@ const MainLayout = () => {
         )}
 
         {/* UNIFORM SCROLLABLE CONTENT AREA */}
-        <main className="flex-1 p-6 md:p-8 max-w-[1400px] w-full mx-auto">
+        <main className="flex-1 p-4 sm:p-6 md:p-8 max-w-[1400px] w-full mx-auto">
           <Outlet />
         </main>
       </div>

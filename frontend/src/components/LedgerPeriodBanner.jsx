@@ -6,9 +6,9 @@ const LedgerPeriodBanner = () => {
   if (loading || !activePeriod) return null;
 
   return (
-    <div className="mb-6 flex items-center justify-between rounded-xl border border-blue-100 bg-blue-50/60 px-5 py-3.5 shadow-xs">
+    <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-blue-100 bg-blue-50/60 px-5 py-3.5 shadow-xs">
       <div className="flex items-center gap-3">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 text-white shadow-xs">
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 text-white shadow-xs shrink-0">
           <svg
             className="h-5 w-5"
             fill="none"
@@ -31,7 +31,7 @@ const LedgerPeriodBanner = () => {
           </p>
         </div>
       </div>
-      <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">
+      <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800 shrink-0">
         Active & Open
       </span>
     </div>

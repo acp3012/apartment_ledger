@@ -418,7 +418,7 @@ const IncomeTab = ({ apartmentId }) => {
           </div>
         </div>
         <div className="overflow-x-auto bg-white rounded-lg shadow border border-gray-200">
-          <table className="min-w-full divide-y divide-gray-200">
+          <table className="w-full min-w-[640px] divide-y divide-gray-200">
             <thead className="bg-blue-50 border-b border-blue-100">
               <tr>
                 <th className="w-36 px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase">

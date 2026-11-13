@@ -276,7 +276,7 @@ const ResidentDashboard = ({
                   </p>
                 ) : (
                   <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm">
+                    <table className="w-full min-w-[380px] text-left text-sm">
                       <thead>
                         <tr className="text-xs uppercase tracking-wide text-slate-400 border-b border-slate-100">
                           <th className="py-2 pr-4 font-semibold">Date</th>
@@ -331,7 +331,7 @@ const ResidentDashboard = ({
           </div>
 
           {/* CARD 2: LINK TO MONTHLY REPORT PAGE */}
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl shadow-sm p-6 text-white flex justify-between items-center">
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl shadow-sm p-6 text-white flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <p className="text-xs uppercase tracking-wider text-blue-200 font-semibold">
                 Apartment Ledger Book
@@ -345,7 +345,7 @@ const ResidentDashboard = ({
             </div>
             <button
               onClick={() => navigate("/monthly-statement")}
-              className="bg-white text-blue-700 hover:bg-blue-50 px-5 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-all whitespace-nowrap ml-4">
+              className="bg-white text-blue-700 hover:bg-blue-50 px-5 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-all whitespace-nowrap w-full sm:w-auto text-center shrink-0">
               Open Report &rarr;
             </button>
           </div>

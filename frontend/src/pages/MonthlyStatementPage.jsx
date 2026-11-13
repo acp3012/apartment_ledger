@@ -360,7 +360,7 @@ const MonthlyStatement = ({ apartmentId: routeApartmentId }) => {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full min-w-[640px] text-left border-collapse">
               <thead className="bg-slate-100 border-b border-slate-200 text-slate-600 uppercase text-xs tracking-wider">
                 <tr>
                   <th className="p-4">Date</th>
