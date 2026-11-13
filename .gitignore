@@ -9,10 +9,13 @@ backend/.classpath
 backend/.project
 .idea/
 *.iml
+.vscode
 .DS_Store
 
 # ignore property files
 backend/src/main/resources/application-dev.properties
 
 # ignore all .txt file
-backend/**/*.txt
+*.txt
+*.tar.*
+*.ods
