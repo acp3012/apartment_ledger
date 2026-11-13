@@ -270,9 +270,9 @@ const ApproveIncomePage = ({ apartmentId: routeApartmentId }) => {
             </div>
           ) : (
             <>
-              {/* DESKTOP VIEW: Table (Hidden on mobile) */}
-              <div className="hidden md:block overflow-x-auto">
-                <table className="w-full text-left border-collapse">
+              {/* RESPONSIVE TABLE FOR DESKTOP & MOBILE */}
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[500px] text-left border-collapse">
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
                       <th className="p-4 w-12 text-center">
@@ -289,16 +289,16 @@ const ApproveIncomePage = ({ apartmentId: routeApartmentId }) => {
                           }
                         />
                       </th>
-                      <th className="p-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">
+                      <th className="p-4 text-sm font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">
                         Date
                       </th>
-                      <th className="p-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">
+                      <th className="p-4 text-sm font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">
                         Flat/Unit
                       </th>
-                      <th className="p-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">
+                      <th className="p-4 text-sm font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">
                         Amount
                       </th>
-                      <th className="p-4 text-sm font-semibold text-gray-600 uppercase tracking-wider">
+                      <th className="p-4 text-sm font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap">
                         Status
                       </th>
                     </tr>
@@ -322,16 +322,16 @@ const ApproveIncomePage = ({ apartmentId: routeApartmentId }) => {
                               onChange={() => toggleSelection(draftId)}
                             />
                           </td>
-                          <td className="p-4 text-gray-600">
+                          <td className="p-4 text-gray-600 whitespace-nowrap">
                             {draft.transactionDate}
                           </td>
-                          <td className="p-4 font-medium text-gray-900">
+                          <td className="p-4 font-medium text-gray-900 whitespace-nowrap">
                             {draft.flatNumber || "N/A"}
                           </td>
-                          <td className="p-4 font-semibold text-emerald-600">
+                          <td className="p-4 font-semibold text-emerald-600 whitespace-nowrap">
                             ₹{draft.amount.toLocaleString("en-IN")}
                           </td>
-                          <td className="p-4">
+                          <td className="p-4 whitespace-nowrap">
                             <span className="px-2.5 py-1 text-xs font-medium bg-amber-100 text-amber-800 rounded-md border border-amber-200">
                               Pending
                             </span>
@@ -341,69 +341,6 @@ const ApproveIncomePage = ({ apartmentId: routeApartmentId }) => {
                     })}
                   </tbody>
                 </table>
-              </div>
-              {/* MOBILE VIEW: Cards (Hidden on desktop) */}
-              <div className="md:hidden flex flex-col p-4 space-y-3 bg-gray-50">
-                <div className="flex items-center pb-2 px-1">
-                  <input
-                    type="checkbox"
-                    id="selectAllMobile"
-                    className="w-5 h-5 rounded border-gray-300 text-indigo-600 mr-3"
-                    onChange={(e) => {
-                      e.stopPropagation();
-                      toggleSelectAll(e);
-                    }}
-                    checked={
-                      drafts.length > 0 && selectedIds.length === drafts.length
-                    }
-                  />
-                  <label
-                    htmlFor="selectAllMobile"
-                    className="text-sm font-medium text-gray-700">
-                    Select All {drafts.length} items
-                  </label>
-                </div>
-
-                {drafts.map((draft, index) => {
-                  const draftId = getDraftId(draft);
-
-                  return (
-                    <div
-                      key={getDraftKey(draft, index)}
-                      className={`bg-white p-4 rounded-xl shadow-sm border transition-all ${draftId !== null && selectedIds.includes(draftId) ? "border-indigo-500 ring-1 ring-indigo-500" : "border-gray-200"}`}>
-                      <div className="flex justify-between items-start mb-2">
-                        <div className="flex items-center gap-3">
-                          <input
-                            type="checkbox"
-                            className="w-5 h-5 rounded border-gray-300 text-indigo-600"
-                            checked={
-                              draftId !== null && selectedIds.includes(draftId)
-                            }
-                            onClick={(e) => e.stopPropagation()}
-                            onChange={(e) => {
-                              e.stopPropagation();
-                              toggleSelection(draftId);
-                            }}
-                          />
-                          <span className="font-bold text-gray-900 text-lg">
-                            {draft.flatNumber || "N/A"}
-                          </span>
-                        </div>
-                        <span className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-800 rounded">
-                          Pending
-                        </span>
-                      </div>
-                      <div className="pl-8 flex justify-between items-end mt-1">
-                        <span className="text-sm text-gray-500">
-                          {draft.transactionDate}
-                        </span>
-                        <span className="font-bold text-emerald-600 text-lg">
-                          ₹{draft.amount.toLocaleString("en-IN")}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
               </div>
 
               {/* ACTION BAR (Sticky on mobile, inline on desktop) */}

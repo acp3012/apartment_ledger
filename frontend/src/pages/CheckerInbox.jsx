@@ -164,7 +164,7 @@ const CheckerInbox = ({ apartmentId: routeApartmentId }) => {
   );
 
   return (
-    <div>
+    <div className="p-4 md:p-6 max-w-7xl mx-auto pb-24 md:pb-6">
       {/* HEADER & CONTROLS */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-4 md:p-5 rounded-2xl shadow-sm border border-slate-200 mb-6 gap-4">
         <div>
@@ -229,9 +229,9 @@ const CheckerInbox = ({ apartmentId: routeApartmentId }) => {
             </div>
           ) : (
             <>
-              {/* DESKTOP TABLE */}
-              <div className="hidden md:block overflow-x-auto">
-                <table className="w-full text-left border-collapse">
+              {/* RESPONSIVE TABLE FOR DESKTOP & MOBILE */}
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[640px] text-left border-collapse">
                   <thead className="bg-slate-50 border-b border-slate-200">
                     <tr>
                       <th className="p-4 w-12 text-center">
@@ -245,22 +245,22 @@ const CheckerInbox = ({ apartmentId: routeApartmentId }) => {
                           }
                         />
                       </th>
-                      <th className="p-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                      <th className="p-4 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">
                         Date
                       </th>
                       <th className="p-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                         Category
                       </th>
-                      <th className="p-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                      <th className="p-4 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">
                         Amount
                       </th>
-                      <th className="p-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                      <th className="p-4 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">
                         Mode
                       </th>
                       <th className="p-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                         Remarks / Ref
                       </th>
-                      <th className="p-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                      <th className="p-4 text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">
                         Maker
                       </th>
                     </tr>
@@ -280,16 +280,16 @@ const CheckerInbox = ({ apartmentId: routeApartmentId }) => {
                               onChange={() => toggleSelection(draftId)}
                             />
                           </td>
-                          <td className="p-4 text-slate-600 text-sm">
+                          <td className="p-4 text-slate-600 text-sm whitespace-nowrap">
                             {draft.transactionDate}
                           </td>
                           <td className="p-4 font-semibold text-slate-900 text-sm">
                             {draft.ledgerCategoryName}
                           </td>
-                          <td className="p-4 font-bold text-rose-600 text-sm">
+                          <td className="p-4 font-bold text-rose-600 text-sm whitespace-nowrap">
                             ₹{Number(draft.amount).toLocaleString("en-IN")}
                           </td>
-                          <td className="p-4 text-slate-600 text-sm">
+                          <td className="p-4 text-slate-600 text-sm whitespace-nowrap">
                             {draft.paymentModeName}
                           </td>
                           <td className="p-4 text-slate-600 text-sm">
@@ -302,7 +302,7 @@ const CheckerInbox = ({ apartmentId: routeApartmentId }) => {
                               </p>
                             )}
                           </td>
-                          <td className="p-4 text-slate-600 text-sm">
+                          <td className="p-4 text-slate-600 text-sm whitespace-nowrap">
                             {draft.createdBy}
                           </td>
                         </tr>
@@ -312,8 +312,8 @@ const CheckerInbox = ({ apartmentId: routeApartmentId }) => {
                 </table>
               </div>
 
-              {/* ACTION BAR */}
-              <div className="bg-slate-50 border-t border-slate-200 p-4 flex justify-between items-center">
+              {/* ACTION BAR (Sticky on mobile, inline on desktop) */}
+              <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20 md:relative md:bg-slate-50 md:shadow-none md:border-t flex justify-between items-center transition-all">
                 <span className="text-sm text-slate-600 font-medium">
                   <span className="font-bold text-blue-600">
                     {selectedIds.length}
@@ -321,17 +321,17 @@ const CheckerInbox = ({ apartmentId: routeApartmentId }) => {
                   selected
                 </span>
 
-                <div className="flex gap-3">
+                <div className="flex gap-2 md:gap-3">
                   <button
                     onClick={() => openModal("REJECT")}
                     disabled={selectedIds.length === 0}
-                    className="px-5 py-2 bg-white hover:bg-red-50 text-red-600 border border-red-200 rounded-xl font-medium disabled:opacity-50 transition-all text-sm shadow-xs">
+                    className="px-4 py-2 md:px-5 md:py-2.5 bg-white hover:bg-red-50 text-red-600 border border-red-200 rounded-xl font-medium disabled:opacity-50 transition-all text-sm md:text-base shadow-xs">
                     Reject
                   </button>
                   <button
                     onClick={() => openModal("APPROVE")}
                     disabled={selectedIds.length === 0}
-                    className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-medium disabled:opacity-50 transition-all text-sm shadow-xs">
+                    className="px-4 py-2 md:px-5 md:py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-medium disabled:opacity-50 transition-all text-sm md:text-base shadow-xs">
                     Approve
                   </button>
                 </div>
