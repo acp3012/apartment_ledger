@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -95,6 +96,11 @@ public class GlobalExceptionHandler {
         return formatErrorResponse(
                 "FORBIDDEN", "You are not authorized to access this resource.", HttpStatus.FORBIDDEN);
     }
+    // To avoid Spring Boot's default 404 page for static resources, we can handle NoResourceFoundException and return a 404 response.
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<Void> handleNoResource(NoResourceFoundException ex) {
+    return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+}
     //==============================================================
     // Database level error : Catches Foreign Key failures triggered by getReferenceById()
     //==============================================================

@@ -34,7 +34,7 @@ import java.util.Optional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Log4j2
+
 public class LedgerService {
     private final LedgerPeriodRepository ledgerPeriodRepository;
     private final MonthlyLedgerRepository monthlyLedgerRepository;
@@ -44,11 +44,9 @@ public class LedgerService {
     private final ExpenseDraftRepository expenseDraftRepository;
     private final IncomeDraftRepository incomeDraftRepository;
     private final IncomeDraftService incomeDraftService;
-    //private final CurrentUserService currentUserService;
+    
     // Current active period of the ledger
     public LedgerPeriodResponse getActiveLedgerPeriod(Long apartmentId){
-
-
 
         var ledgerPeriod = ledgerPeriodRepository.findById(apartmentId)
                 .orElseThrow(()-> new ResourceNotFoundException("Apartment id not found"));
