@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../api/axiosConfig';
+import { getApiErrorMessage } from '../utils/errorHandler';
 
 const RegisterPage = () => {
     const navigate = useNavigate();
@@ -34,9 +35,10 @@ const RegisterPage = () => {
             }, 2000);
             
         } catch (error) {
-            // Catches your custom BadRequestException message
-            const errorMessage = error.response?.data?.message || "Registration failed. Please try again.";
-            setStatus({ type: 'error', message: errorMessage });
+            setStatus({
+                type: 'error',
+                message: getApiErrorMessage(error, "Registration failed. Please try again.")
+            });
             setIsLoading(false);
         }
     };

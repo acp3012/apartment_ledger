@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../api/axiosConfig";
+import { getApiErrorMessage } from "../utils/errorHandler";
 
 const FirstTimeAdminPage = () => {
   const navigate = useNavigate();
@@ -20,9 +21,10 @@ const FirstTimeAdminPage = () => {
       });
     } catch (requestError) {
       setError(
-        requestError.response?.data?.message ||
-          requestError.message ||
-          "Unable to verify this administrator account.",
+        getApiErrorMessage(
+          requestError,
+          "Unable to verify this administrator account."
+        )
       );
     } finally {
       setIsLoading(false);

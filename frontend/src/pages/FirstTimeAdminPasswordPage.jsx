@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import api from "../api/axiosConfig";
 import { useAuth } from "../context/AuthContext";
+import { getApiErrorMessage } from "../utils/errorHandler";
 
 const FirstTimeAdminPasswordPage = () => {
   const navigate = useNavigate();
@@ -54,8 +55,10 @@ const FirstTimeAdminPasswordPage = () => {
       });
     } catch (requestError) {
       setError(
-        requestError.response?.data?.message ||
-          "Unable to save your password. Please try again.",
+        getApiErrorMessage(
+          requestError,
+          "Unable to save your password. Please try again."
+        )
       );
       setIsLoading(false);
       return;

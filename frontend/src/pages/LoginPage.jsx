@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../api/axiosConfig";
 import { useAuth } from "../context/AuthContext"; // 1. Import the hook
+import { getApiErrorMessage } from "../utils/errorHandler";
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -28,7 +29,7 @@ const LoginPage = () => {
       login(response.data);
       navigate("/dashboard");
     } catch (err) {
-      setError(err.response?.data?.message || "Invalid email or password.");
+      setError(getApiErrorMessage(err, "Invalid email or password."));
       setIsLoading(false);
     }
   };
